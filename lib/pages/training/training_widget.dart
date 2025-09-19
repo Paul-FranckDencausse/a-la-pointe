@@ -105,438 +105,170 @@ class _TrainingWidgetState extends State<TrainingWidget> {
         ),
         body: SafeArea(
           top: true,
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(TrainingWidget.routeName);
-                        },
-                        child: Icon(
-                          Icons.sports_gymnastics,
-                          color: FlutterFlowTheme.of(context).secondary,
-                          size: 36.0,
-                        ),
-                      ),
-                      Opacity(
-                        opacity: 0.0,
-                        child: Container(
-                          width: 65.2,
-                          height: 100.0,
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context)
-                                .secondaryBackground,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(ResultsWidget.routeName);
-                        },
-                        child: Icon(
-                          Icons.data_thresholding_sharp,
-                          color: FlutterFlowTheme.of(context).secondary,
-                          size: 36.0,
-                        ),
-                      ),
-                      Opacity(
-                        opacity: 0.0,
-                        child: Container(
-                          width: 55.0,
-                          height: 100.0,
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context)
-                                .secondaryBackground,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(BluetoothWidget.routeName);
-                        },
-                        child: Icon(
-                          Icons.bluetooth_sharp,
-                          color: FlutterFlowTheme.of(context).secondary,
-                          size: 36.0,
-                        ),
-                      ),
-                      Opacity(
-                        opacity: 0.0,
-                        child: Container(
-                          width: 72.6,
-                          height: 100.0,
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context)
-                                .secondaryBackground,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          await launchURL('https://www.a-la-pointe.fr/shop');
-                        },
-                        child: Icon(
-                          Icons.shopping_cart,
-                          color: FlutterFlowTheme.of(context).secondary,
-                          size: 36.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                  FlutterFlowAdBanner(
-                    width: MediaQuery.sizeOf(context).width * 1.0,
-                    height: 50.0,
-                    showsTestAd: true,
-                  ),
-                  Opacity(
-                    opacity: 0.0,
-                    child: Container(
-                      width: 100.0,
-                      height: 40.04,
-                      decoration: BoxDecoration(
-                        color: FlutterFlowTheme.of(context).secondaryBackground,
+          child: SingleChildScrollView( // ✅ Pour éviter l’overflow
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    InkWell(
+                      splashColor: Colors.transparent,
+                      focusColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      onTap: () async {
+                        context.pushNamed(TrainingWidget.routeName);
+                      },
+                      child: Icon(
+                        Icons.sports_gymnastics,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 36.0,
                       ),
                     ),
-                  ),
-                  Text(
-                    'Entraînements',
-                    style: FlutterFlowTheme.of(context).titleLarge.override(
-                          font: GoogleFonts.interTight(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleLarge
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleLarge
-                                .fontStyle,
-                          ),
-                          color: FlutterFlowTheme.of(context).secondary,
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .titleLarge
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).titleLarge.fontStyle,
-                        ),
-                  ),
-                  Opacity(
-                    opacity: 0.0,
-                    child: Container(
-                      width: 100.0,
-                      height: 30.06,
-                      decoration: BoxDecoration(
-                        color: FlutterFlowTheme.of(context).secondaryBackground,
+                    SizedBox(width: 20),
+                    InkWell(
+                      onTap: () async {
+                        context.pushNamed(ResultsWidget.routeName);
+                      },
+                      child: Icon(
+                        Icons.data_thresholding_sharp,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 36.0,
                       ),
                     ),
-                  ),
-                  FlutterFlowDropDown<String>(
-                    controller: _model.dropDownValueController ??=
-                        FormFieldController<String>(null),
-                    options: ['Initiation', 'Loisir', 'Performeur', 'Série'],
-                    onChanged: (val) =>
-                        safeSetState(() => _model.dropDownValue = val),
-                    width: 200.0,
-                    height: 40.0,
-                    textStyle: FlutterFlowTheme.of(context).bodyMedium.override(
-                          font: GoogleFonts.inter(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
-                    hintText: 'Type d\'entraînement',
-                    icon: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: FlutterFlowTheme.of(context).secondaryText,
-                      size: 24.0,
-                    ),
-                    fillColor: FlutterFlowTheme.of(context).secondaryBackground,
-                    elevation: 2.0,
-                    borderColor: Colors.transparent,
-                    borderWidth: 0.0,
-                    borderRadius: 8.0,
-                    margin:
-                        EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 12.0, 0.0),
-                    hidesUnderline: true,
-                    isOverButton: false,
-                    isSearchable: false,
-                    isMultiSelect: false,
-                  ),
-                  Opacity(
-                    opacity: 0.0,
-                    child: Container(
-                      width: 100.0,
-                      height: 81.12,
-                      decoration: BoxDecoration(
-                        color: FlutterFlowTheme.of(context).secondaryBackground,
+                    SizedBox(width: 20),
+                    InkWell(
+                      onTap: () async {
+                        context.pushNamed(BluetoothWidget.routeName);
+                      },
+                      child: Icon(
+                        Icons.bluetooth_sharp,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 36.0,
                       ),
                     ),
-                  ),
-                  FlutterFlowRadioButton(
-                    options: ['Sabre', 'Epée', 'Fleuret'].toList(),
-                    onChanged: (val) => safeSetState(() {}),
-                    controller: _model.radioButtonValueController ??=
-                        FormFieldController<String>(null),
-                    optionHeight: 32.0,
-                    textStyle:
-                        FlutterFlowTheme.of(context).labelMedium.override(
-                              font: GoogleFonts.inter(
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .labelMedium
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .labelMedium
-                                    .fontStyle,
-                              ),
-                              letterSpacing: 0.0,
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .labelMedium
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .labelMedium
-                                  .fontStyle,
-                            ),
-                    selectedTextStyle: FlutterFlowTheme.of(context)
-                        .bodyMedium
-                        .override(
-                          font: GoogleFonts.inter(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
-                    buttonPosition: RadioButtonPosition.left,
-                    direction: Axis.vertical,
-                    radioButtonColor: FlutterFlowTheme.of(context).secondary,
-                    inactiveRadioButtonColor:
-                        FlutterFlowTheme.of(context).secondaryText,
-                    toggleable: false,
-                    horizontalAlignment: WrapAlignment.start,
-                    verticalAlignment: WrapCrossAlignment.start,
-                  ),
-                  Text(
-                    'Intensité',
-                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                          font: GoogleFonts.inter(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
-                  ),
-                  Slider(
-                    activeColor: FlutterFlowTheme.of(context).secondary,
-                    inactiveColor: FlutterFlowTheme.of(context).alternate,
-                    min: 0.0,
-                    max: 10.0,
-                    value: _model.sliderValue ??= 5.0,
-                    onChanged: (newValue) {
-                      newValue = double.parse(newValue.toStringAsFixed(2));
-                      safeSetState(() => _model.sliderValue = newValue);
-                    },
-                  ),
-                  Container(
-                    width: 200.0,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Theme(
-                        data: ThemeData(
-                          checkboxTheme: CheckboxThemeData(
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          unselectedWidgetColor:
-                              FlutterFlowTheme.of(context).alternate,
-                        ),
-                        child: CheckboxListTile(
-                          value: _model.checkboxListTileValue1 ??= true,
-                          onChanged: (newValue) async {
-                            safeSetState(() =>
-                                _model.checkboxListTileValue1 = newValue!);
-                          },
-                          title: Text(
-                            'Contre-la-montre',
-                            style: FlutterFlowTheme.of(context)
-                                .labelMedium
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelMedium
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelMedium
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .labelMedium
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .labelMedium
-                                      .fontStyle,
-                                ),
-                          ),
-                          tileColor:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          activeColor: FlutterFlowTheme.of(context).secondary,
-                          checkColor: FlutterFlowTheme.of(context).info,
-                          dense: false,
-                          controlAffinity: ListTileControlAffinity.trailing,
-                          contentPadding: EdgeInsetsDirectional.fromSTEB(
-                              12.0, 0.0, 12.0, 0.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                        ),
+                    SizedBox(width: 20),
+                    InkWell(
+                      onTap: () async {
+                        await launchURL('https://www.a-la-pointe.fr/shop');
+                      },
+                      child: Icon(
+                        Icons.shopping_cart,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 36.0,
                       ),
                     ),
-                  ),
-                  Container(
-                    width: 200.0,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Theme(
-                        data: ThemeData(
-                          checkboxTheme: CheckboxThemeData(
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          unselectedWidgetColor:
-                              FlutterFlowTheme.of(context).alternate,
-                        ),
-                        child: CheckboxListTile(
-                          value: _model.checkboxListTileValue2 ??= true,
-                          onChanged: (newValue) async {
-                            safeSetState(() =>
-                                _model.checkboxListTileValue2 = newValue!);
-                          },
-                          title: Text(
-                            'Chronométré',
-                            style: FlutterFlowTheme.of(context)
-                                .labelMedium
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelMedium
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelMedium
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .labelMedium
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .labelMedium
-                                      .fontStyle,
-                                ),
-                          ),
-                          tileColor:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          activeColor: FlutterFlowTheme.of(context).secondary,
-                          checkColor: FlutterFlowTheme.of(context).info,
-                          dense: false,
-                          controlAffinity: ListTileControlAffinity.trailing,
-                          contentPadding: EdgeInsetsDirectional.fromSTEB(
-                              12.0, 0.0, 12.0, 0.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                        ),
-                      ),
+                  ],
+                ),
+                FlutterFlowAdBanner(
+                  width: MediaQuery.sizeOf(context).width * 1.0,
+                  height: 50.0,
+                  showsTestAd: true,
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Entraînements',
+                  style: FlutterFlowTheme.of(context).titleLarge.override(
+                    font: GoogleFonts.interTight(
+                      fontWeight: FlutterFlowTheme.of(context)
+                          .titleLarge
+                          .fontWeight,
+                      fontStyle: FlutterFlowTheme.of(context)
+                          .titleLarge
+                          .fontStyle,
                     ),
+                    color: FlutterFlowTheme.of(context).secondary,
+                    letterSpacing: 0.0,
                   ),
-                  Container(
-                    width: 200.0,
+                ),
+                SizedBox(height: 20),
+                FlutterFlowDropDown<String>(
+                  controller: _model.dropDownValueController ??= FormFieldController<String>(null),
+                  options: ['Initiation', 'Loisir', 'Performeur', 'Série'],
+                  onChanged: (val) => safeSetState(() => _model.dropDownValue = val),
+                  width: 200.0,
+                  height: 40.0,
+                  textStyle: FlutterFlowTheme.of(context).bodyMedium, // ✅ obligatoire
+                  hintText: 'Type d\'entraînement',
+                  icon: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: FlutterFlowTheme.of(context).secondaryText,
+                    size: 24.0,
                   ),
-                  Container(
-                    width: 405.8,
-                    height: 100.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).alternate,
-                    ),
-                    child: Align(
-                      alignment: AlignmentDirectional(0.0, 0.0),
-                      child: Text(
-                        'Mentions légales',
-                        style: FlutterFlowTheme.of(context).bodyMedium.override(
-                              font: GoogleFonts.inter(
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .fontStyle,
-                              ),
-                              letterSpacing: 0.0,
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .fontStyle,
-                            ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [],
-              ),
-            ],
+                  fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+                  elevation: 2.0,
+                  borderColor: Colors.transparent,
+                  borderWidth: 0.0,
+                  borderRadius: 8.0,
+                  margin: EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 12.0, 0.0), // ✅ obligatoire
+                  hidesUnderline: true,
+                  isOverButton: false,
+                  isSearchable: false,
+                  isMultiSelect: false,
+                ),
+
+                SizedBox(height: 20),
+                FlutterFlowRadioButton(
+                  options: ['Sabre', 'Epée', 'Fleuret'].toList(),
+                  onChanged: (val) => safeSetState(() {}),
+                  controller: _model.radioButtonValueController ??=
+                      FormFieldController<String>(null),
+                  optionHeight: 32.0,
+                  textStyle: FlutterFlowTheme.of(context).labelMedium,
+                  selectedTextStyle: FlutterFlowTheme.of(context).bodyMedium,
+                  buttonPosition: RadioButtonPosition.left,
+                  direction: Axis.vertical,
+                  radioButtonColor: FlutterFlowTheme.of(context).secondary,
+                  inactiveRadioButtonColor:
+                  FlutterFlowTheme.of(context).secondaryText,
+                  toggleable: false,
+                  horizontalAlignment: WrapAlignment.start,
+                  verticalAlignment: WrapCrossAlignment.start,
+                ),
+                SizedBox(height: 20),
+                Text('Intensité',
+                    style: FlutterFlowTheme.of(context).bodyMedium),
+                Slider(
+                  activeColor: FlutterFlowTheme.of(context).secondary,
+                  inactiveColor: FlutterFlowTheme.of(context).alternate,
+                  min: 0.0,
+                  max: 10.0,
+                  value: _model.sliderValue ??= 5.0,
+                  onChanged: (newValue) {
+                    newValue = double.parse(newValue.toStringAsFixed(2));
+                    safeSetState(() => _model.sliderValue = newValue);
+                  },
+                ),
+                CheckboxListTile(
+                  value: _model.checkboxListTileValue1 ??= true,
+                  onChanged: (newValue) {
+                    safeSetState(() => _model.checkboxListTileValue1 = newValue!);
+                  },
+                  title: Text('Contre-la-montre'),
+                  activeColor: FlutterFlowTheme.of(context).secondary,
+                  checkColor: FlutterFlowTheme.of(context).info,
+                ),
+                CheckboxListTile(
+                  value: _model.checkboxListTileValue2 ??= true,
+                  onChanged: (newValue) {
+                    safeSetState(() => _model.checkboxListTileValue2 = newValue!);
+                  },
+                  title: Text('Chronométré'),
+                  activeColor: FlutterFlowTheme.of(context).secondary,
+                  checkColor: FlutterFlowTheme.of(context).info,
+                ),
+                SizedBox(height: 30),
+                Container(
+                  width: double.infinity,
+                  height: 80,
+                  color: FlutterFlowTheme.of(context).alternate,
+                  alignment: Alignment.center,
+                  child: Text('Mentions légales',
+                      style: FlutterFlowTheme.of(context).bodyMedium),
+                ),
+              ],
+            ),
           ),
         ),
       ),

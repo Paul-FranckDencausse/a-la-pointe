@@ -39,7 +39,6 @@ class _ResultsWidgetState extends State<ResultsWidget> {
   @override
   void dispose() {
     _model.dispose();
-
     super.dispose();
   }
 
@@ -56,333 +55,169 @@ class _ResultsWidgetState extends State<ResultsWidget> {
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
           automaticallyImplyLeading: false,
-          leading: Opacity(
-            opacity: 0.0,
-            child: Container(
-              width: 10.0,
-              height: 100.0,
-              decoration: BoxDecoration(
-                color: FlutterFlowTheme.of(context).secondaryBackground,
+          title: InkWell(
+            onTap: () async {
+              context.pushNamed(HomePageWidget.routeName);
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.asset(
+                'assets/images/picto-alp-bleu_(1).png',
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
               ),
             ),
           ),
-          title: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Opacity(
-                opacity: 0.0,
-                child: Container(
-                  width: 10.0,
-                  height: 100.0,
-                  decoration: BoxDecoration(
-                    color: FlutterFlowTheme.of(context).secondaryBackground,
-                  ),
-                ),
-              ),
-              InkWell(
-                splashColor: Colors.transparent,
-                focusColor: Colors.transparent,
-                hoverColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-                onTap: () async {
-                  context.pushNamed(HomePageWidget.routeName);
-                },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: Image.asset(
-                    'assets/images/picto-alp-bleu_(1).png',
-                    width: 10.1,
-                    height: 56.6,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [],
-          centerTitle: false,
           elevation: 2.0,
         ),
         body: SafeArea(
-          top: true,
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(TrainingWidget.routeName);
-                        },
-                        child: Icon(
-                          Icons.sports_gymnastics,
-                          color: FlutterFlowTheme.of(context).secondary,
-                          size: 36.0,
-                        ),
-                      ),
-                      Opacity(
-                        opacity: 0.0,
-                        child: Container(
-                          width: 10.25,
-                          height: 100.0,
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context)
-                                .secondaryBackground,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(ResultsWidget.routeName);
-                        },
-                        child: Icon(
-                          Icons.data_thresholding_sharp,
-                          color: FlutterFlowTheme.of(context).secondary,
-                          size: 36.0,
-                        ),
-                      ),
-                      Opacity(
-                        opacity: 0.0,
-                        child: Container(
-                          width: 55.04,
-                          height: 100.0,
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context)
-                                .secondaryBackground,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(BluetoothWidget.routeName);
-                        },
-                        child: Icon(
-                          Icons.bluetooth_sharp,
-                          color: FlutterFlowTheme.of(context).secondary,
-                          size: 36.0,
-                        ),
-                      ),
-                      Opacity(
-                        opacity: 0.0,
-                        child: Container(
-                          width: 72.64,
-                          height: 100.0,
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context)
-                                .secondaryBackground,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          await launchURL('https://www.a-la-pointe.fr/shop');
-                        },
-                        child: Icon(
-                          Icons.shopping_cart,
-                          color: FlutterFlowTheme.of(context).secondary,
-                          size: 36.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                  FlutterFlowAdBanner(
-                    width: MediaQuery.sizeOf(context).width * 1.0,
-                    height: 50.0,
-                    showsTestAd: true,
-                  ),
-                  Opacity(
-                    opacity: 0.0,
-                    child: Container(
-                      width: 100.0,
-                      height: 27.88,
-                      decoration: BoxDecoration(
-                        color: FlutterFlowTheme.of(context).secondaryBackground,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Navigation Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    InkWell(
+                      onTap: () => context.pushNamed(TrainingWidget.routeName),
+                      child: Icon(
+                        Icons.sports_gymnastics,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 36,
                       ),
                     ),
-                  ),
-                  Text(
-                    'Résultats',
-                    style: FlutterFlowTheme.of(context).titleLarge.override(
-                          font: GoogleFonts.interTight(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleLarge
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleLarge
-                                .fontStyle,
-                          ),
-                          color: FlutterFlowTheme.of(context).secondary,
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .titleLarge
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).titleLarge.fontStyle,
-                        ),
-                  ),
-                  Opacity(
-                    opacity: 0.0,
-                    child: Container(
-                      width: 100.0,
-                      height: 54.47,
-                      decoration: BoxDecoration(
-                        color: FlutterFlowTheme.of(context).secondaryBackground,
+                    InkWell(
+                      onTap: () => context.pushNamed(ResultsWidget.routeName),
+                      child: Icon(
+                        Icons.data_thresholding_sharp,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 36,
                       ),
                     ),
+                    InkWell(
+                      onTap: () => context.pushNamed(BluetoothWidget.routeName),
+                      child: Icon(
+                        Icons.bluetooth_sharp,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 36,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () async {
+                        await launchURL('https://www.a-la-pointe.fr/shop');
+                      },
+                      child: Icon(
+                        Icons.shopping_cart,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 36,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                FlutterFlowAdBanner(
+                  width: MediaQuery.sizeOf(context).width,
+                  height: 50,
+                  showsTestAd: true,
+                ),
+
+                const SizedBox(height: 20),
+
+                Text(
+                  'Résultats',
+                  style: FlutterFlowTheme.of(context).titleLarge.override(
+                    font: GoogleFonts.interTight(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    color: FlutterFlowTheme.of(context).secondary,
                   ),
-                  Container(
-                    width: 370.0,
-                    height: 230.0,
-                    child: FlutterFlowLineChart(
-                      data: [
-                        FFLineChartData(
-                          xData: List.generate(random_data.randomInteger(5, 5),
-                              (index) => random_data.randomInteger(0, 10)),
-                          yData: List.generate(random_data.randomInteger(5, 5),
-                              (index) => random_data.randomInteger(0, 10)),
-                          settings: LineChartBarData(
+                ),
+
+                const SizedBox(height: 20),
+
+                // Line Chart
+                Container(
+                  width: double.infinity,
+                  height: 230,
+                  child: FlutterFlowLineChart(
+                    data: [
+                      FFLineChartData(
+                        xData: List.generate(5,
+                                (index) => random_data.randomInteger(0, 10)),
+                        yData: List.generate(5,
+                                (index) => random_data.randomInteger(0, 10)),
+                        settings: LineChartBarData(
+                          color: FlutterFlowTheme.of(context).secondary,
+                          barWidth: 2.0,
+                          isCurved: true,
+                          dotData: FlDotData(show: false),
+                          belowBarData: BarAreaData(
+                            show: true,
                             color: FlutterFlowTheme.of(context).secondary,
-                            barWidth: 2.0,
-                            isCurved: true,
-                            dotData: FlDotData(show: false),
-                            belowBarData: BarAreaData(
-                              show: true,
-                              color: FlutterFlowTheme.of(context).secondary,
-                            ),
                           ),
-                        )
-                      ],
-                      chartStylingInfo: ChartStylingInfo(
-                        backgroundColor:
-                            FlutterFlowTheme.of(context).secondaryBackground,
-                        showBorder: false,
-                      ),
-                      axisBounds: AxisBounds(),
-                      xAxisLabelInfo: AxisLabelInfo(
-                        reservedSize: 32.0,
-                      ),
-                      yAxisLabelInfo: AxisLabelInfo(
-                        reservedSize: 40.0,
-                      ),
-                    ),
-                  ),
-                  Opacity(
-                    opacity: 0.0,
-                    child: Container(
-                      width: 100.0,
-                      height: 38.9,
-                      decoration: BoxDecoration(
-                        color: FlutterFlowTheme.of(context).secondaryBackground,
-                      ),
-                    ),
-                  ),
-                  CircularPercentIndicator(
-                    percent: 0.5,
-                    radius: 60.0,
-                    lineWidth: 12.0,
-                    animation: true,
-                    animateFromLastPercent: true,
-                    progressColor: FlutterFlowTheme.of(context).secondary,
-                    backgroundColor: FlutterFlowTheme.of(context).accent4,
-                    center: Text(
-                      '50%',
-                      style:
-                          FlutterFlowTheme.of(context).headlineSmall.override(
-                                font: GoogleFonts.interTight(
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .headlineSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .headlineSmall
-                                      .fontStyle,
-                                ),
-                                letterSpacing: 0.0,
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .headlineSmall
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .headlineSmall
-                                    .fontStyle,
-                              ),
-                    ),
-                  ),
-                  Container(
-                    width: 405.8,
-                    height: 100.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).alternate,
-                    ),
-                    child: Align(
-                      alignment: AlignmentDirectional(0.0, 0.0),
-                      child: InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          await launchURL('https://www.a-la-pointe.fr/terms');
-                        },
-                        child: Text(
-                          'Mentions légales',
-                          style:
-                              FlutterFlowTheme.of(context).bodyMedium.override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontStyle,
-                                  ),
                         ),
+                      )
+                    ],
+                    chartStylingInfo: ChartStylingInfo(
+                      backgroundColor:
+                      FlutterFlowTheme.of(context).secondaryBackground,
+                      showBorder: false,
+                    ),
+                    axisBounds: AxisBounds(),
+                    xAxisLabelInfo: AxisLabelInfo(
+                      reservedSize: 32,
+                    ),
+                    yAxisLabelInfo: AxisLabelInfo(
+                      reservedSize: 40,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                CircularPercentIndicator(
+                  percent: 0.5,
+                  radius: 60,
+                  lineWidth: 12,
+                  animation: true,
+                  progressColor: FlutterFlowTheme.of(context).secondary,
+                  backgroundColor: FlutterFlowTheme.of(context).accent4,
+                  center: Text(
+                    '50%',
+                    style: FlutterFlowTheme.of(context).headlineSmall.override(
+                      font: GoogleFonts.interTight(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  Opacity(
-                    opacity: 0.0,
-                    child: Container(
-                      width: 100.0,
-                      height: 27.9,
-                      decoration: BoxDecoration(
-                        color: FlutterFlowTheme.of(context).secondaryBackground,
-                      ),
-                    ),
+                ),
+
+                const SizedBox(height: 80), // Pour laisser de la place avant le footer
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: Container(
+          height: 60,
+          color: FlutterFlowTheme.of(context).alternate,
+          child: Center(
+            child: InkWell(
+              onTap: () async {
+                await launchURL('https://www.a-la-pointe.fr/terms');
+              },
+              child: Text(
+                'Mentions légales',
+                style: FlutterFlowTheme.of(context).bodyMedium.override(
+                  font: GoogleFonts.inter(
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
+                ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [],
-              ),
-            ],
+            ),
           ),
         ),
       ),

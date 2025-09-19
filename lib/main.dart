@@ -82,7 +82,7 @@ class _MyAppState extends State<MyApp> {
         brightness: Brightness.light,
         useMaterial3: false,
       ),
-      
+
       themeMode: _themeMode,
       routerConfig: _router,
     );
