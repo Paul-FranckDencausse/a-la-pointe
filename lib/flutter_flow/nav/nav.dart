@@ -67,11 +67,6 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
       path: BluetoothWidget.routePath,
       builder: (context, params) => BluetoothWidget(),
     ),
-    FFRoute(
-      name: ErreurWidget.routeName,
-      path: ErreurWidget.routePath,
-      builder: (context, params) => ErreurWidget(),
-    )
   ].map((r) => r.toRoute(appStateNotifier)).toList(),
 );
 

@@ -41,7 +41,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-
+        <key>NSBluetoothAlwaysUsageDescription</key>
+        <string>Notre application utilise le Bluetooth pour se connecter à des capteurs et appareils externes.</string>
+        <key>NSBluetoothPeripheralUsageDescription</key>
+        <string>Notre application utilise le Bluetooth pour se connecter à des capteurs et appareils externes.</string>
+        <key>NSLocationWhenInUseUsageDescription</key> <!-- Souvent requis avec le Bluetooth -->
+        <string>Cette application a besoin d'accéder à votre localisation pour trouver les appareils Bluetooth à proximité.</string>
 
 
 
