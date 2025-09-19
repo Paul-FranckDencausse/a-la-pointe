@@ -126,7 +126,7 @@ class _BluetoothWidgetState extends State<BluetoothWidget> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               Icon(
-                Icons.bluetooth_settings,
+                Icons.bluetooth,
                 size: 80,
                 color: theme.colorScheme.primary, // Utilisation du schéma de couleurs du thème
               ),

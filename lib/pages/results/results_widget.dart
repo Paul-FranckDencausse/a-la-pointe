@@ -59,7 +59,7 @@ class _ResultsWidgetState extends State<ResultsWidget> {
           leading: Opacity(
             opacity: 0.0,
             child: Container(
-              width: 100.0,
+              width: 10.0,
               height: 100.0,
               decoration: BoxDecoration(
                 color: FlutterFlowTheme.of(context).secondaryBackground,
@@ -72,7 +72,7 @@ class _ResultsWidgetState extends State<ResultsWidget> {
               Opacity(
                 opacity: 0.0,
                 child: Container(
-                  width: 100.0,
+                  width: 10.0,
                   height: 100.0,
                   decoration: BoxDecoration(
                     color: FlutterFlowTheme.of(context).secondaryBackground,
@@ -91,7 +91,7 @@ class _ResultsWidgetState extends State<ResultsWidget> {
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.asset(
                     'assets/images/picto-alp-bleu_(1).png',
-                    width: 70.1,
+                    width: 10.1,
                     height: 56.6,
                     fit: BoxFit.cover,
                   ),
@@ -131,7 +131,7 @@ class _ResultsWidgetState extends State<ResultsWidget> {
                       Opacity(
                         opacity: 0.0,
                         child: Container(
-                          width: 65.25,
+                          width: 10.25,
                           height: 100.0,
                           decoration: BoxDecoration(
                             color: FlutterFlowTheme.of(context)
