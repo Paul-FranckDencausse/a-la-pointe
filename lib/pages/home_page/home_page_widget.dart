@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '/pages/training/training_widget.dart';
 import '/pages/results/results_widget.dart';
 import '/pages/bluetooth/bluetooth_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'home_page_model.dart';
 export 'home_page_model.dart';
@@ -134,31 +135,80 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Image de présentation
-                      Container(
-                        width: MediaQuery.sizeOf(context).width * 0.8,
-                        constraints:
-                        const BoxConstraints(maxHeight: 250),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 5,
-                              offset: const Offset(0, 3),
+                      InkWell(
+                        onTap: () async {
+                          const videoUrl = 'https://www.youtube.com/watch?v=gLiqPg28OK0'; // <<< VOTRE URL YOUTUBE ICI
+                          if (await canLaunchUrl(Uri.parse(videoUrl))) {
+                            await launchUrl(Uri.parse(videoUrl));
+                          } else {
+                            // Gérer l'erreur si l'URL ne peut pas être lancée
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Impossible d\'ouvrir la vidéo.')),
+                            );
+                            debugPrint('Could not launch $videoUrl');
+                          }
+                        },
+                        child: Container(
+                          width: MediaQuery.sizeOf(context).width * 0.8,
+                          constraints: const BoxConstraints(
+                            maxHeight: 200, // Ajustez la hauteur pour une miniature
+                            minHeight: 150, // Hauteur minimale optionnelle
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.grey[300], // Couleur de fond pendant le chargement
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 5,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Miniature de la vidéo depuis le web
+                                Image.network(
+                                  'https://img.youtube.com/vi/gLiqPg28OK0/maxresdefault.jpg',
+                                  fit: BoxFit.cover,
+                                  width: double.infinity, // Pour remplir le Container
+                                  height: double.infinity, // Pour remplir le Container
+                                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                            : null,
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                    return const Icon(Icons.broken_image, size: 50, color: Colors.grey);
+                                  },
+                                ),
+                                // Icône "Play" superposée (optionnel mais recommandé)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.4),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: const Icon(
+                                    Icons.play_arrow_rounded,
+                                    color: Colors.white,
+                                    size: 40.0,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            'assets/images/cibles_connectees.png',
-                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
 
                       // Paragraphe descriptif
                       Text(

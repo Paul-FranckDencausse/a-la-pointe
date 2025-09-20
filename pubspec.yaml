@@ -86,7 +86,7 @@ dev_dependencies:
   lints: 4.0.0
   flutter_test:
     sdk: flutter
-
+  url_launcher: ^6.3.0   # (ou la dernière version stable)
 flutter:
 
   # The following line ensures that the Material Icons font is
