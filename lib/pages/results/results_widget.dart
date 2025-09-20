@@ -86,7 +86,7 @@ class _ResultsWidgetState extends State<ResultsWidget> {
               borderRadius: BorderRadius.circular(8.0),
               child: Image.asset(
                 'assets/images/picto-alp-bleu_(1).png',
-                width: 56,
+                width: 70,
                 height: 56,
                 fit: BoxFit.cover,
               ),
