@@ -109,34 +109,68 @@ class _HomePageWidgetState extends State<HomePageWidget> {
 
                 const SizedBox(height: 24),
 
-                // ✅ Texte principal
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Connexion\nBluetooth\ninterrompue',
+            // ✅ Section Présentation "À la Pointe"
+            Padding(
+              padding: const EdgeInsets.all(16.0), // Padding général pour la section
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center, // Centre les éléments horizontalement
+                children: [
+                  // Titre
+                  Text(
+                    'Bienvenue chez À la Pointe !',
                     textAlign: TextAlign.center,
-                    style: FlutterFlowTheme.of(context).titleLarge.override(
-                      font: GoogleFonts.interTight(
-                        fontWeight: FlutterFlowTheme.of(context)
-                            .titleLarge
-                            .fontWeight,
-                        fontStyle: FlutterFlowTheme.of(context)
-                            .titleLarge
-                            .fontStyle,
-                      ),
-                      color: FlutterFlowTheme.of(context).secondary,
-                      letterSpacing: 0.0,
+                    style: FlutterFlowTheme.of(context).headlineMedium.override(
+                      fontFamily: FlutterFlowTheme.of(context).headlineMediumFamily,
+                      color: FlutterFlowTheme.of(context).primaryText, // Ou une autre couleur
+                      fontWeight: FontWeight.bold, // Mettre en gras
+                      useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).headlineMediumFamily),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 16),
 
-                const SizedBox(height: 100), // espace pour éviter l’overflow
-              ],
+                  // Image de présentation
+                  Container(
+                    width: MediaQuery.sizeOf(context).width * 0.8, // 80% de la largeur de l'écran
+                    constraints: const BoxConstraints(
+                      maxHeight: 250, // Hauteur maximale pour l'image
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12), // Coins arrondis pour l'image
+                      boxShadow: [ // Ombre portée subtile
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect( // Pour appliquer le borderRadius à l'image
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/images/cibles_connectees.png', // <<< VOTRE IMAGE ICI
+                        fit: BoxFit.cover, // Ou BoxFit.contain selon votre image
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Paragraphe descriptif
+                  Text(
+                    'Découvrez nos cibles d\'escrime intelligentes, connectées en Bluetooth ! Révolutionnez vos entraînements grâce à une analyse précise de vos performances et un suivi en temps réel. Conçues pour les passionnés et les professionnels de l\'escrime.',
+                    textAlign: TextAlign.center, // Ou TextAlign.justify pour un look plus formel
+                    style: FlutterFlowTheme.of(context).bodyLarge.override(
+                      fontFamily: FlutterFlowTheme.of(context).bodyLargeFamily,
+                      color: FlutterFlowTheme.of(context).secondaryText, // Ou une autre couleur
+                      useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyLargeFamily),
+                    ),
+                  ),
+                  const SizedBox(height: 24), // Espace avant l'élément suivant ou la fin
+                ],
+              ),
             ),
-          ),
-        ),
 
-        // ✅ Navigation officielle
+            // ✅ Navigation officielle
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,

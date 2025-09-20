@@ -36,17 +36,14 @@ class AppStateNotifier extends ChangeNotifier {
 }
 
 GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
-  initialLocation: '/homePage',
+  initialLocation: HomePageWidget.routePath, // plutôt que '/HomePage'
+
   debugLogDiagnostics: true,
   refreshListenable: appStateNotifier,
   navigatorKey: appNavigatorKey,
   errorBuilder: (context, state) => HomePageWidget(),
   routes: [
-    FFRoute(
-      name: '_initialize',
-      path: '/',
-      builder: (context, _) => HomePageWidget(),
-    ),
+
     FFRoute(
       name: HomePageWidget.routeName,
       path: HomePageWidget.routePath,
