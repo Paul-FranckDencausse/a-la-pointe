@@ -27,6 +27,7 @@ class _ResultsWidgetState extends State<ResultsWidget> {
   late ResultsModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  int _selectedIndex = 1; // Index par défaut = "Résultats"
 
   @override
   void initState() {
@@ -42,6 +43,27 @@ class _ResultsWidgetState extends State<ResultsWidget> {
     super.dispose();
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        context.pushNamed(TrainingWidget.routeName);
+        break;
+      case 1:
+        context.pushNamed(ResultsWidget.routeName);
+        break;
+      case 2:
+        context.pushNamed(BluetoothWidget.routeName);
+        break;
+      case 3:
+        launchURL('https://www.a-la-pointe.fr/shop');
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -55,6 +77,7 @@ class _ResultsWidgetState extends State<ResultsWidget> {
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
           automaticallyImplyLeading: false,
+          centerTitle: true, // ✅ Centre le logo
           title: InkWell(
             onTap: () async {
               context.pushNamed(HomePageWidget.routeName);
@@ -77,46 +100,6 @@ class _ResultsWidgetState extends State<ResultsWidget> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Navigation Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    InkWell(
-                      onTap: () => context.pushNamed(TrainingWidget.routeName),
-                      child: Icon(
-                        Icons.sports_gymnastics,
-                        color: FlutterFlowTheme.of(context).secondary,
-                        size: 36,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => context.pushNamed(ResultsWidget.routeName),
-                      child: Icon(
-                        Icons.data_thresholding_sharp,
-                        color: FlutterFlowTheme.of(context).secondary,
-                        size: 36,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => context.pushNamed(BluetoothWidget.routeName),
-                      child: Icon(
-                        Icons.bluetooth_sharp,
-                        color: FlutterFlowTheme.of(context).secondary,
-                        size: 36,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () async {
-                        await launchURL('https://www.a-la-pointe.fr/shop');
-                      },
-                      child: Icon(
-                        Icons.shopping_cart,
-                        color: FlutterFlowTheme.of(context).secondary,
-                        size: 36,
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 12),
 
                 FlutterFlowAdBanner(
@@ -146,10 +129,10 @@ class _ResultsWidgetState extends State<ResultsWidget> {
                   child: FlutterFlowLineChart(
                     data: [
                       FFLineChartData(
-                        xData: List.generate(5,
-                                (index) => random_data.randomInteger(0, 10)),
-                        yData: List.generate(5,
-                                (index) => random_data.randomInteger(0, 10)),
+                        xData: List.generate(
+                            5, (index) => random_data.randomInteger(0, 10)),
+                        yData: List.generate(
+                            5, (index) => random_data.randomInteger(0, 10)),
                         settings: LineChartBarData(
                           color: FlutterFlowTheme.of(context).secondary,
                           barWidth: 2.0,
@@ -196,29 +179,36 @@ class _ResultsWidgetState extends State<ResultsWidget> {
                   ),
                 ),
 
-                const SizedBox(height: 80), // Pour laisser de la place avant le footer
+                const SizedBox(height: 80),
               ],
             ),
           ),
         ),
-        bottomNavigationBar: Container(
-          height: 60,
-          color: FlutterFlowTheme.of(context).alternate,
-          child: Center(
-            child: InkWell(
-              onTap: () async {
-                await launchURL('https://www.a-la-pointe.fr/terms');
-              },
-              child: Text(
-                'Mentions légales',
-                style: FlutterFlowTheme.of(context).bodyMedium.override(
-                  font: GoogleFonts.inter(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+        // ✅ Barre de navigation principale
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          selectedItemColor: FlutterFlowTheme.of(context).secondary,
+          unselectedItemColor: Colors.grey,
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.sports_gymnastics),
+              label: 'Training',
             ),
-          ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.data_thresholding_sharp),
+              label: 'Résultats',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bluetooth_sharp),
+              label: 'Bluetooth',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart),
+              label: 'Boutique',
+            ),
+          ],
         ),
       ),
     );

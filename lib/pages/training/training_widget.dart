@@ -27,6 +27,7 @@ class _TrainingWidgetState extends State<TrainingWidget> {
   late TrainingModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  int _selectedIndex = 0; // ✅ Ajout pour la bottom nav
 
   @override
   void initState() {
@@ -39,8 +40,28 @@ class _TrainingWidgetState extends State<TrainingWidget> {
   @override
   void dispose() {
     _model.dispose();
-
     super.dispose();
+  }
+
+  void _onItemTapped(int index) async {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        context.pushNamed(TrainingWidget.routeName);
+        break;
+      case 1:
+        context.pushNamed(ResultsWidget.routeName);
+        break;
+      case 2:
+        context.pushNamed(BluetoothWidget.routeName);
+        break;
+      case 3:
+        await launchURL('https://www.a-la-pointe.fr/shop');
+        break;
+    }
   }
 
   @override
@@ -56,140 +77,61 @@ class _TrainingWidgetState extends State<TrainingWidget> {
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
           automaticallyImplyLeading: false,
-          leading: Opacity(
-            opacity: 0.0,
-            child: Container(
-              width: 100.0,
-              height: 100.0,
-              decoration: BoxDecoration(
-                color: FlutterFlowTheme.of(context).secondaryBackground,
+          title: InkWell(
+            splashColor: Colors.transparent,
+            onTap: () async {
+              context.pushNamed(HomePageWidget.routeName);
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.asset(
+                'assets/images/picto-alp-bleu_(1).png',
+                width: 70,
+                height: 56,
+                fit: BoxFit.cover,
               ),
             ),
           ),
-          title: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Opacity(
-                opacity: 0.0,
-                child: Container(
-                  width: 100.0,
-                  height: 100.0,
-                  decoration: BoxDecoration(
-                    color: FlutterFlowTheme.of(context).secondaryBackground,
-                  ),
-                ),
-              ),
-              InkWell(
-                splashColor: Colors.transparent,
-                focusColor: Colors.transparent,
-                hoverColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-                onTap: () async {
-                  context.pushNamed(HomePageWidget.routeName);
-                },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: Image.asset(
-                    'assets/images/picto-alp-bleu_(1).png',
-                    width: 70.1,
-                    height: 56.6,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [],
-          centerTitle: false,
+          centerTitle: true,
           elevation: 2.0,
         ),
         body: SafeArea(
           top: true,
-          child: SingleChildScrollView( // ✅ Pour éviter l’overflow
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.max,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    InkWell(
-                      splashColor: Colors.transparent,
-                      focusColor: Colors.transparent,
-                      hoverColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      onTap: () async {
-                        context.pushNamed(TrainingWidget.routeName);
-                      },
-                      child: Icon(
-                        Icons.sports_gymnastics,
-                        color: FlutterFlowTheme.of(context).secondary,
-                        size: 36.0,
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                    InkWell(
-                      onTap: () async {
-                        context.pushNamed(ResultsWidget.routeName);
-                      },
-                      child: Icon(
-                        Icons.data_thresholding_sharp,
-                        color: FlutterFlowTheme.of(context).secondary,
-                        size: 36.0,
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                    InkWell(
-                      onTap: () async {
-                        context.pushNamed(BluetoothWidget.routeName);
-                      },
-                      child: Icon(
-                        Icons.bluetooth_sharp,
-                        color: FlutterFlowTheme.of(context).secondary,
-                        size: 36.0,
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                    InkWell(
-                      onTap: () async {
-                        await launchURL('https://www.a-la-pointe.fr/shop');
-                      },
-                      child: Icon(
-                        Icons.shopping_cart,
-                        color: FlutterFlowTheme.of(context).secondary,
-                        size: 36.0,
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 16),
+
                 FlutterFlowAdBanner(
-                  width: MediaQuery.sizeOf(context).width * 1.0,
+                  width: MediaQuery.sizeOf(context).width,
                   height: 50.0,
                   showsTestAd: true,
                 ),
-                SizedBox(height: 20),
+
+                const SizedBox(height: 20),
                 Text(
                   'Entraînements',
                   style: FlutterFlowTheme.of(context).titleLarge.override(
-                    font: GoogleFonts.interTight(
-                      fontWeight: FlutterFlowTheme.of(context)
-                          .titleLarge
-                          .fontWeight,
-                      fontStyle: FlutterFlowTheme.of(context)
-                          .titleLarge
-                          .fontStyle,
-                    ),
+                    fontFamily: GoogleFonts.interTight().fontFamily,
+                    fontWeight:
+                    FlutterFlowTheme.of(context).titleLarge.fontWeight,
+                    fontStyle:
+                    FlutterFlowTheme.of(context).titleLarge.fontStyle,
                     color: FlutterFlowTheme.of(context).secondary,
-                    letterSpacing: 0.0,
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
+
                 FlutterFlowDropDown<String>(
-                  controller: _model.dropDownValueController ??= FormFieldController<String>(null),
+                  controller: _model.dropDownValueController ??=
+                      FormFieldController<String>(null),
                   options: ['Initiation', 'Loisir', 'Performeur', 'Série'],
-                  onChanged: (val) => safeSetState(() => _model.dropDownValue = val),
+                  onChanged: (val) =>
+                      safeSetState(() => _model.dropDownValue = val),
                   width: 200.0,
                   height: 40.0,
-                  textStyle: FlutterFlowTheme.of(context).bodyMedium, // ✅ obligatoire
+                  textStyle: FlutterFlowTheme.of(context).bodyMedium,
                   hintText: 'Type d\'entraînement',
                   icon: Icon(
                     Icons.keyboard_arrow_down_rounded,
@@ -201,34 +143,40 @@ class _TrainingWidgetState extends State<TrainingWidget> {
                   borderColor: Colors.transparent,
                   borderWidth: 0.0,
                   borderRadius: 8.0,
-                  margin: EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 12.0, 0.0), // ✅ obligatoire
+                  margin:
+                  const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0),
                   hidesUnderline: true,
                   isOverButton: false,
                   isSearchable: false,
                   isMultiSelect: false,
                 ),
 
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 FlutterFlowRadioButton(
-                  options: ['Sabre', 'Epée', 'Fleuret'].toList(),
+                  options: ['Sabre', 'Épée', 'Fleuret'].toList(),
                   onChanged: (val) => safeSetState(() {}),
                   controller: _model.radioButtonValueController ??=
                       FormFieldController<String>(null),
                   optionHeight: 32.0,
                   textStyle: FlutterFlowTheme.of(context).labelMedium,
-                  selectedTextStyle: FlutterFlowTheme.of(context).bodyMedium,
+                  selectedTextStyle:
+                  FlutterFlowTheme.of(context).bodyMedium,
                   buttonPosition: RadioButtonPosition.left,
                   direction: Axis.vertical,
-                  radioButtonColor: FlutterFlowTheme.of(context).secondary,
+                  radioButtonColor:
+                  FlutterFlowTheme.of(context).secondary,
                   inactiveRadioButtonColor:
                   FlutterFlowTheme.of(context).secondaryText,
                   toggleable: false,
                   horizontalAlignment: WrapAlignment.start,
                   verticalAlignment: WrapCrossAlignment.start,
                 ),
-                SizedBox(height: 20),
-                Text('Intensité',
-                    style: FlutterFlowTheme.of(context).bodyMedium),
+
+                const SizedBox(height: 20),
+                Text(
+                  'Intensité',
+                  style: FlutterFlowTheme.of(context).bodyMedium,
+                ),
                 Slider(
                   activeColor: FlutterFlowTheme.of(context).secondary,
                   inactiveColor: FlutterFlowTheme.of(context).alternate,
@@ -240,34 +188,79 @@ class _TrainingWidgetState extends State<TrainingWidget> {
                     safeSetState(() => _model.sliderValue = newValue);
                   },
                 ),
+
                 CheckboxListTile(
                   value: _model.checkboxListTileValue1 ??= true,
                   onChanged: (newValue) {
-                    safeSetState(() => _model.checkboxListTileValue1 = newValue!);
+                    safeSetState(
+                            () => _model.checkboxListTileValue1 = newValue!);
                   },
-                  title: Text('Contre-la-montre'),
+                  title: const Text('Contre-la-montre'),
                   activeColor: FlutterFlowTheme.of(context).secondary,
                   checkColor: FlutterFlowTheme.of(context).info,
                 ),
                 CheckboxListTile(
                   value: _model.checkboxListTileValue2 ??= true,
                   onChanged: (newValue) {
-                    safeSetState(() => _model.checkboxListTileValue2 = newValue!);
+                    safeSetState(
+                            () => _model.checkboxListTileValue2 = newValue!);
                   },
-                  title: Text('Chronométré'),
+                  title: const Text('Chronométré'),
                   activeColor: FlutterFlowTheme.of(context).secondary,
                   checkColor: FlutterFlowTheme.of(context).info,
                 ),
-                SizedBox(height: 30),
-                Container(
-                  width: double.infinity,
-                  height: 80,
-                  color: FlutterFlowTheme.of(context).alternate,
-                  alignment: Alignment.center,
-                  child: Text('Mentions légales',
-                      style: FlutterFlowTheme.of(context).bodyMedium),
-                ),
+
+                const SizedBox(height: 30),
               ],
+            ),
+          ),
+        ),
+
+        // ✅ Navigation officielle
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          selectedItemColor: FlutterFlowTheme.of(context).secondary,
+          unselectedItemColor: Colors.grey,
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.sports_gymnastics),
+              label: 'Training',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.data_thresholding_sharp),
+              label: 'Résultats',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bluetooth_sharp),
+              label: 'Bluetooth',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart),
+              label: 'Boutique',
+            ),
+          ],
+        ),
+
+        // ✅ Mentions légales en footer flottant
+        bottomSheet: Container(
+          height: 40,
+          color: FlutterFlowTheme.of(context).alternate,
+          alignment: Alignment.center,
+          child: InkWell(
+            onTap: () async {
+              await launchURL('https://www.a-la-pointe.fr/terms');
+            },
+            child: Text(
+              'Mentions légales',
+              style: FlutterFlowTheme.of(context).bodyMedium.override(
+                fontFamily: GoogleFonts.inter().fontFamily,
+                fontWeight:
+                FlutterFlowTheme.of(context).bodyMedium.fontWeight,
+                fontStyle:
+                FlutterFlowTheme.of(context).bodyMedium.fontStyle,
+              ),
             ),
           ),
         ),
