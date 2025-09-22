@@ -54,10 +54,17 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
       path: TrainingWidget.routePath,
       builder: (context, params) => TrainingWidget(),
     ),
+    // Dans lib/flutter_flow/nav/nav.dart
     FFRoute(
       name: ResultsWidget.routeName,
       path: ResultsWidget.routePath,
-      builder: (context, params) => ResultsWidget(),
+      builder: (BuildContext context, FFParameters params) { // params est FFParameters
+        final deviceId = params.getParam<String>(
+          'deviceId',
+          ParamType.String,
+        );
+        return ResultsWidget(deviceId: deviceId); // <<< deviceId est passé ici
+      },
     ),
     FFRoute(
       name: BluetoothWidget.routeName,
