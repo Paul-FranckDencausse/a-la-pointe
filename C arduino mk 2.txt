@@ -46,7 +46,7 @@
 const int targetPins[TARGET_COUNT] = {ULN_LED1, ULN_LED2, ULN_LED3, ULN_LED4, ULN_LED5};
 const int targetStates[TARGET_COUNT] = {TARGET1_STATE, TARGET2_STATE, TARGET3_STATE, TARGET4_STATE, TARGET5_STATE};
 
-// Mode enumeration
+// Mode énumération
 enum Mode { INITIATION=0, LOISIR=1, PERFORMEURS=2, SERIE=3 };
 const char* modeNames[] = {"INITIATION","LOISIR","PERFORMEURS","SERIE"};
 Mode currentMode = INITIATION;
