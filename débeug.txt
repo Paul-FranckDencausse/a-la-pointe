@@ -1,0 +1,178 @@
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+
+// === Définition des broches CORRIGÉES selon ton schéma ===
+#define LED1        11  // ULN_led1
+#define LED2        18  // ULN_led2
+#define LED3        19  // ULN_led3
+#define LED4        20  // ULN_led4
+#define LED5        21  // ULN_led5
+
+#define BUZZER      10  // ULN_buzzer
+#define POWER_LED   9   // System_LED
+#define USER_BTN    25  // USER_SW
+
+#define TARGET1     29  // Target1_STATE
+#define TARGET2     31  // Target2_STATE
+#define TARGET3     33  // Target3_STATE
+#define TARGET4     35  // Target4_STATE
+#define TARGET5     37  // Target5_STATE
+
+// BLE UUIDs
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+// Variables
+BLEServer* pServer = nullptr;
+BLECharacteristic* pCharacteristic = nullptr;
+bool deviceConnected = false;
+
+int nbcible = 0;
+int cible = 0;
+int etatcible = 1;
+int lastButtonState = HIGH;
+
+int LastTarget1 = HIGH;
+int LastTarget2 = HIGH;
+int LastTarget3 = HIGH;
+int LastTarget4 = HIGH;
+int LastTarget5 = HIGH;
+
+unsigned long startTime = 0;
+
+class MyServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer* pServer) {
+    deviceConnected = true;
+    Serial.println("BLE Client connecté !");
+    digitalWrite(BUZZER, HIGH); delay(100); digitalWrite(BUZZER, LOW); delay(100);
+    digitalWrite(BUZZER, HIGH); delay(100); digitalWrite(BUZZER, LOW);
+  }
+
+  void onDisconnect(BLEServer* pServer) {
+    deviceConnected = false;
+    Serial.println("BLE Client déconnecté !");
+  }
+};
+
+void setup() {
+  Serial.begin(115200);
+
+  // GPIO setup
+void setup() {
+  Serial.begin(115200);
+
+  // Configuration des GPIO
+  pinMode(LED1, OUTPUT); pinMode(LED2, OUTPUT); pinMode(LED3, OUTPUT);
+  pinMode(LED4, OUTPUT); pinMode(LED5, OUTPUT);
+  pinMode(BUZZER, OUTPUT); pinMode(POWER_LED, OUTPUT);
+  pinMode(USER_BTN, INPUT_PULLUP);
+
+  pinMode(TARGET1, INPUT);
+  pinMode(TARGET2, INPUT);
+  pinMode(TARGET3, INPUT);
+  pinMode(TARGET4, INPUT);
+  pinMode(TARGET5, INPUT);
+
+  // --- TEST BUZZER ---
+  Serial.println("Test buzzer...");
+  digitalWrite(BUZZER, HIGH); delay(200);
+  digitalWrite(BUZZER, LOW);  delay(200);
+  digitalWrite(BUZZER, HIGH); delay(200);
+  digitalWrite(BUZZER, LOW);
+  Serial.println("Buzzer test done");
+
+  randomSeed(millis());
+
+  
+}
+  // BLE init
+  BLEDevice::init("CIBLE_BLE");
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+  pCharacteristic = pService->createCharacteristic(
+                      CHARACTERISTIC_UUID,
+                      BLECharacteristic::PROPERTY_NOTIFY);
+  pCharacteristic->addDescriptor(new BLE2902());
+  pService->start();
+
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(true);
+  pAdvertising->setMinPreferred(0x06);  // iPhone compatible
+  pAdvertising->setMinPreferred(0x12);
+  BLEDevice::startAdvertising();
+
+  Serial.println("BLE prêt et en attente de connexion...");
+}
+
+void loop() {
+  // Bouton de sélection du nombre de cibles
+  int buttonState = digitalRead(USER_BTN);
+  if (buttonState == LOW && lastButtonState == HIGH) {
+    etatcible = 1;
+    nbcible++;
+    if (nbcible == 6) nbcible = 1;
+
+    for (int i = 0; i < nbcible * 2 - 1; i++) {
+      digitalWrite(POWER_LED, HIGH); delay(200);
+      digitalWrite(POWER_LED, LOW); delay(200);
+    }
+    delay(20);
+  }
+  lastButtonState = buttonState;
+
+  if (etatcible == 1 && deviceConnected) {
+    eteindreToutesLEDs();
+    delay(250);
+    cible = random(nbcible) + 1;
+    startTime = millis();
+
+    char buf[20];
+    snprintf(buf, sizeof(buf), "CIBLE:%d", cible);
+    pCharacteristic->setValue(buf);
+    pCharacteristic->notify();
+    Serial.println(buf);
+
+    etatcible = 0;
+  }
+
+  // Lecture des 5 cibles
+  gererCible(1, LED4, TARGET4, LastTarget1);
+  gererCible(2, LED5, TARGET5, LastTarget2);
+  gererCible(3, LED1, TARGET1, LastTarget3);
+  gererCible(4, LED2, TARGET2, LastTarget4);
+  gererCible(5, LED3, TARGET3, LastTarget5);
+
+  delay(10);
+}
+
+void gererCible(int numero, int ledPin, int inputPin, int &lastState) {
+  if (cible == numero) {
+    digitalWrite(ledPin, HIGH);
+    int state = digitalRead(inputPin);
+    if (state == HIGH && lastState == LOW) {
+      unsigned long reaction = millis() - startTime;
+      digitalWrite(BUZZER, HIGH); delay(100); digitalWrite(BUZZER, LOW);
+      if (deviceConnected) {
+        char buf[30];
+        snprintf(buf, sizeof(buf), "TOUCHE:%d:%lu", numero, reaction);
+        pCharacteristic->setValue(buf);
+        pCharacteristic->notify();
+        Serial.println(buf);
+      }
+      etatcible = 1;
+    }
+    lastState = state;
+  }
+}
+
+void eteindreToutesLEDs() {
+  digitalWrite(LED1, LOW);
+  digitalWrite(LED2, LOW);
+  digitalWrite(LED3, LOW);
+  digitalWrite(LED4, LOW);
+  digitalWrite(LED5, LOW);
+}
