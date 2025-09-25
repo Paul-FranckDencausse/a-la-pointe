@@ -55,6 +55,31 @@ Listez les principales fonctionnalités de l'application :
 ![img.png](img.png)
 ![img_1.png](img_1.png)
 
+## Prérequis
+
+Avant de pouvoir exécuter ou développer cette application, assurez-vous d'avoir installé les éléments suivants sur votre système :
+
+1.  **SDK Flutter :**
+    *   Téléchargez et installez le SDK Flutter en suivant les instructions officielles sur le site [flutter.dev](https://flutter.dev/docs/get-started/install).
+    *   Assurez-vous que la commande `flutter` est accessible depuis votre terminal (vérifiez votre variable d'environnement PATH).
+    *   Exécutez `flutter doctor` pour vérifier que votre installation de Flutter est correcte et pour identifier d'éventuels problèmes de configuration.
+
+2.  **Android Studio :**
+    *   Téléchargez et installez la dernière version d'Android Studio depuis le site officiel [developer.android.com/studio](https://developer.android.com/studio).
+    *   Pendant l'installation d'Android Studio, assurez-vous que les composants suivants sont installés :
+        *   Android SDK
+        *   Android SDK Platform-Tools
+        *   Android SDK Build-Tools
+    *   Dans Android Studio, installez les plugins `Flutter` et `Dart` :
+        *   Allez dans `File > Settings > Plugins` (ou `Android Studio > Preferences > Plugins` sur macOS).
+        *   Recherchez "Flutter" dans la marketplace, installez-le (cela installera également le plugin Dart automatiquement).
+        *   Redémarrez Android Studio après l'installation des plugins.
+
+3.  **Un émulateur Android ou un appareil Android physique :**
+    *   **Émulateur :** Vous pouvez en configurer un via l'AVD Manager dans Android Studio ("Tools" > "AVD Manager").
+    *   **Appareil physique :** Activez les "Options pour les développeurs" et le "Débogage USB" sur votre appareil.
+
+
 ## Exécuter l'application avec Android Studio
 
 Pour lancer l'application sur un émulateur Android ou un appareil physique connecté via Android Studio :
