@@ -27,13 +27,15 @@ class _TrainingWidgetState extends State<TrainingWidget> {
   late TrainingModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  int _selectedIndex = 0; // ✅ Ajout pour la bottom nav
+  int _selectedIndex = 0;
+
+  // ✅ Variable de connexion Bluetooth (factice pour l’instant)
+  bool isConnected = false;
 
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => TrainingModel());
-
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
@@ -95,128 +97,16 @@ class _TrainingWidgetState extends State<TrainingWidget> {
           centerTitle: true,
           elevation: 2.0,
         ),
+
+        // ✅ Corps : affiche en fonction de la connexion
         body: SafeArea(
           top: true,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                const SizedBox(height: 16),
-
-                FlutterFlowAdBanner(
-                  width: MediaQuery.sizeOf(context).width,
-                  height: 50.0,
-                  showsTestAd: true,
-                ),
-
-                const SizedBox(height: 20),
-                Text(
-                  'Entraînements',
-                  style: FlutterFlowTheme.of(context).titleLarge.override(
-                    fontFamily: GoogleFonts.interTight().fontFamily,
-                    fontWeight:
-                    FlutterFlowTheme.of(context).titleLarge.fontWeight,
-                    fontStyle:
-                    FlutterFlowTheme.of(context).titleLarge.fontStyle,
-                    color: FlutterFlowTheme.of(context).secondary,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                FlutterFlowDropDown<String>(
-                  controller: _model.dropDownValueController ??=
-                      FormFieldController<String>(null),
-                  options: ['Initiation', 'Loisir', 'Performeur', 'Série'],
-                  onChanged: (val) =>
-                      safeSetState(() => _model.dropDownValue = val),
-                  width: 200.0,
-                  height: 40.0,
-                  textStyle: FlutterFlowTheme.of(context).bodyMedium,
-                  hintText: 'Type d\'entraînement',
-                  icon: Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: FlutterFlowTheme.of(context).secondaryText,
-                    size: 24.0,
-                  ),
-                  fillColor: FlutterFlowTheme.of(context).secondaryBackground,
-                  elevation: 2.0,
-                  borderColor: Colors.transparent,
-                  borderWidth: 0.0,
-                  borderRadius: 8.0,
-                  margin:
-                  const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0),
-                  hidesUnderline: true,
-                  isOverButton: false,
-                  isSearchable: false,
-                  isMultiSelect: false,
-                ),
-
-                const SizedBox(height: 20),
-                FlutterFlowRadioButton(
-                  options: ['Sabre', 'Épée', 'Fleuret'].toList(),
-                  onChanged: (val) => safeSetState(() {}),
-                  controller: _model.radioButtonValueController ??=
-                      FormFieldController<String>(null),
-                  optionHeight: 32.0,
-                  textStyle: FlutterFlowTheme.of(context).labelMedium,
-                  selectedTextStyle:
-                  FlutterFlowTheme.of(context).bodyMedium,
-                  buttonPosition: RadioButtonPosition.left,
-                  direction: Axis.vertical,
-                  radioButtonColor:
-                  FlutterFlowTheme.of(context).secondary,
-                  inactiveRadioButtonColor:
-                  FlutterFlowTheme.of(context).secondaryText,
-                  toggleable: false,
-                  horizontalAlignment: WrapAlignment.start,
-                  verticalAlignment: WrapCrossAlignment.start,
-                ),
-
-                const SizedBox(height: 20),
-                Text(
-                  'Intensité',
-                  style: FlutterFlowTheme.of(context).bodyMedium,
-                ),
-                Slider(
-                  activeColor: FlutterFlowTheme.of(context).secondary,
-                  inactiveColor: FlutterFlowTheme.of(context).alternate,
-                  min: 0.0,
-                  max: 10.0,
-                  value: _model.sliderValue ??= 5.0,
-                  onChanged: (newValue) {
-                    newValue = double.parse(newValue.toStringAsFixed(2));
-                    safeSetState(() => _model.sliderValue = newValue);
-                  },
-                ),
-
-                CheckboxListTile(
-                  value: _model.checkboxListTileValue1 ??= true,
-                  onChanged: (newValue) {
-                    safeSetState(
-                            () => _model.checkboxListTileValue1 = newValue!);
-                  },
-                  title: const Text('Contre-la-montre'),
-                  activeColor: FlutterFlowTheme.of(context).secondary,
-                  checkColor: FlutterFlowTheme.of(context).info,
-                ),
-                CheckboxListTile(
-                  value: _model.checkboxListTileValue2 ??= true,
-                  onChanged: (newValue) {
-                    safeSetState(
-                            () => _model.checkboxListTileValue2 = newValue!);
-                  },
-                  title: const Text('Chronométré'),
-                  activeColor: FlutterFlowTheme.of(context).secondary,
-                  checkColor: FlutterFlowTheme.of(context).info,
-                ),
-
-                const SizedBox(height: 30),
-              ],
-            ),
-          ),
+          child: isConnected
+              ? _buildTrainingForm(context)
+              : _buildNotConnected(context),
         ),
 
-        // ✅ Navigation officielle
+        // ✅ Navigation
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
@@ -243,7 +133,7 @@ class _TrainingWidgetState extends State<TrainingWidget> {
           ],
         ),
 
-        // ✅ Mentions légales en footer flottant
+        // ✅ Mentions légales
         bottomSheet: Container(
           height: 40,
           color: FlutterFlowTheme.of(context).alternate,
@@ -264,6 +154,159 @@ class _TrainingWidgetState extends State<TrainingWidget> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// ✅ Écran quand aucune cible n’est connectée
+  Widget _buildNotConnected(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bluetooth_disabled,
+                size: 80, color: FlutterFlowTheme.of(context).secondaryText),
+            const SizedBox(height: 20),
+            Text(
+              "Aucune cible connectée",
+              style: FlutterFlowTheme.of(context).titleLarge,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Active ton Bluetooth et connecte une cible\navant de commencer l’entraînement.",
+              textAlign: TextAlign.center,
+              style: FlutterFlowTheme.of(context).bodyMedium,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.pushNamed(BluetoothWidget.routeName);
+              },
+              icon: const Icon(Icons.bluetooth),
+              label: const Text("Se connecter à une cible"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// ✅ Formulaire complet quand connecté
+  Widget _buildTrainingForm(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          const SizedBox(height: 16),
+          FlutterFlowAdBanner(
+            width: MediaQuery.sizeOf(context).width,
+            height: 50.0,
+            showsTestAd: true,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Entraînements',
+            style: FlutterFlowTheme.of(context).titleLarge.override(
+              fontFamily: GoogleFonts.interTight().fontFamily,
+              fontWeight:
+              FlutterFlowTheme.of(context).titleLarge.fontWeight,
+              fontStyle:
+              FlutterFlowTheme.of(context).titleLarge.fontStyle,
+              color: FlutterFlowTheme.of(context).secondary,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Dropdown
+          FlutterFlowDropDown<String>(
+            controller: _model.dropDownValueController ??=
+                FormFieldController<String>(null),
+            options: ['Initiation', 'Loisir', 'Performeur', 'Série'],
+            onChanged: (val) =>
+                safeSetState(() => _model.dropDownValue = val),
+            width: 200.0,
+            height: 40.0,
+            textStyle: FlutterFlowTheme.of(context).bodyMedium,
+            hintText: 'Type d\'entraînement',
+            icon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: FlutterFlowTheme.of(context).secondaryText,
+              size: 24.0,
+            ),
+            fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+            elevation: 2.0,
+            borderColor: Colors.transparent,
+            borderWidth: 0.0,
+            borderRadius: 8.0,
+            margin: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0),
+            hidesUnderline: true,
+            isOverButton: false,
+            isSearchable: false,
+            isMultiSelect: false,
+          ),
+
+          const SizedBox(height: 20),
+          // Radio boutons
+          FlutterFlowRadioButton(
+            options: ['Sabre', 'Épée', 'Fleuret'].toList(),
+            onChanged: (val) => safeSetState(() {}),
+            controller: _model.radioButtonValueController ??=
+                FormFieldController<String>(null),
+            optionHeight: 32.0,
+            textStyle: FlutterFlowTheme.of(context).labelMedium,
+            selectedTextStyle: FlutterFlowTheme.of(context).bodyMedium,
+            buttonPosition: RadioButtonPosition.left,
+            direction: Axis.vertical,
+            radioButtonColor: FlutterFlowTheme.of(context).secondary,
+            inactiveRadioButtonColor:
+            FlutterFlowTheme.of(context).secondaryText,
+            toggleable: false,
+            horizontalAlignment: WrapAlignment.start,
+            verticalAlignment: WrapCrossAlignment.start,
+          ),
+
+          const SizedBox(height: 20),
+          Text(
+            'Intensité',
+            style: FlutterFlowTheme.of(context).bodyMedium,
+          ),
+          Slider(
+            activeColor: FlutterFlowTheme.of(context).secondary,
+            inactiveColor: FlutterFlowTheme.of(context).alternate,
+            min: 0.0,
+            max: 10.0,
+            value: _model.sliderValue ??= 5.0,
+            onChanged: (newValue) {
+              newValue = double.parse(newValue.toStringAsFixed(2));
+              safeSetState(() => _model.sliderValue = newValue);
+            },
+          ),
+
+          CheckboxListTile(
+            value: _model.checkboxListTileValue1 ??= true,
+            onChanged: (newValue) {
+              safeSetState(
+                      () => _model.checkboxListTileValue1 = newValue!);
+            },
+            title: const Text('Silencieux'),
+            activeColor: FlutterFlowTheme.of(context).secondary,
+            checkColor: FlutterFlowTheme.of(context).info,
+          ),
+          CheckboxListTile(
+            value: _model.checkboxListTileValue2 ??= true,
+            onChanged: (newValue) {
+              safeSetState(
+                      () => _model.checkboxListTileValue2 = newValue!);
+            },
+            title: const Text('Buzzer'),
+            activeColor: FlutterFlowTheme.of(context).secondary,
+            checkColor: FlutterFlowTheme.of(context).info,
+          ),
+
+          const SizedBox(height: 30),
+        ],
       ),
     );
   }
