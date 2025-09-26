@@ -268,46 +268,46 @@ class _TrainingWidgetState extends State<TrainingWidget> {
           ),
 
           const SizedBox(height: 20),
-          Text(
-            'Intensité',
-            style: FlutterFlowTheme.of(context).bodyMedium,
-          ),
-          Slider(
-            activeColor: FlutterFlowTheme.of(context).secondary,
-            inactiveColor: FlutterFlowTheme.of(context).alternate,
-            min: 0.0,
-            max: 10.0,
-            value: _model.sliderValue ??= 5.0,
-            onChanged: (newValue) {
-              newValue = double.parse(newValue.toStringAsFixed(2));
-              safeSetState(() => _model.sliderValue = newValue);
-            },
-          ),
 
+          // ✅ Checkbox "Mode silencieux"
           CheckboxListTile(
-            value: _model.checkboxListTileValue1 ??= true,
+            value: _model.checkboxListTileValue1 ??= false,
             onChanged: (newValue) {
-              safeSetState(
-                      () => _model.checkboxListTileValue1 = newValue!);
+              safeSetState(() => _model.checkboxListTileValue1 = newValue!);
+              if (newValue == true) {
+                sendCommandToSensor("SILENT_ON");
+              } else {
+                sendCommandToSensor("SILENT_OFF");
+              }
             },
-            title: const Text('Silencieux'),
+            title: const Text('Mode silencieux'),
             activeColor: FlutterFlowTheme.of(context).secondary,
             checkColor: FlutterFlowTheme.of(context).info,
           ),
+
+          // ✅ Checkbox "Buzzer"
           CheckboxListTile(
             value: _model.checkboxListTileValue2 ??= true,
             onChanged: (newValue) {
-              safeSetState(
-                      () => _model.checkboxListTileValue2 = newValue!);
+              safeSetState(() => _model.checkboxListTileValue2 = newValue!);
+              if (newValue == true) {
+                sendCommandToSensor("BUZZER_ON");
+              } else {
+                sendCommandToSensor("BUZZER_OFF");
+              }
             },
-            title: const Text('Buzzer'),
+            title: const Text('Buzzer activé'),
             activeColor: FlutterFlowTheme.of(context).secondary,
             checkColor: FlutterFlowTheme.of(context).info,
           ),
-
-          const SizedBox(height: 30),
         ],
       ),
     );
+  }
+
+  /// ✅ Fonction qui enverra la commande au capteur
+  void sendCommandToSensor(String command) {
+    debugPrint("📡 Envoi au capteur : $command");
+    // Ici tu mettras la logique Bluetooth (flutter_blue, etc.)
   }
 }
