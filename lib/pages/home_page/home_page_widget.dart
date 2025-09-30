@@ -120,18 +120,13 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                       Text(
                         'Bienvenue chez À la Pointe !',
                         textAlign: TextAlign.center,
-                        style: FlutterFlowTheme.of(context)
-                            .headlineMedium
-                            .override(
-                          fontFamily: FlutterFlowTheme.of(context)
-                              .headlineMediumFamily,
-                          color:
-                          FlutterFlowTheme.of(context).primaryText,
-                          fontWeight: FontWeight.bold,
-                          useGoogleFonts: GoogleFonts.asMap().containsKey(
-                              FlutterFlowTheme.of(context)
-                                  .headlineMediumFamily),
+                        style: FlutterFlowTheme.of(context).titleLarge.override(
+                          fontFamily: GoogleFonts.inter().fontFamily, // ✅ corrige ici
+                          fontWeight: FlutterFlowTheme.of(context).titleLarge.fontWeight,
+                          fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
+                          color: FlutterFlowTheme.of(context).secondary,
                         ),
+
                       ),
                       const SizedBox(height: 16),
 

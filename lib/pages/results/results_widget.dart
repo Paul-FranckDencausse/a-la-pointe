@@ -207,10 +207,10 @@ class _ResultsWidgetState extends State<ResultsWidget> {
                       ? 'Résultats pour Appareil (...${widget.deviceId!.substring(widget.deviceId!.length - 5)})'
                       : 'Résultats Généraux',
                   style: FlutterFlowTheme.of(context).titleLarge.override(
-                    fontFamily: GoogleFonts.interTight().fontFamily,
-                    fontWeight: FontWeight.w600,
+                    fontFamily: GoogleFonts.inter().fontFamily, // ✅ corrige ici
+                    fontWeight: FlutterFlowTheme.of(context).titleLarge.fontWeight,
+                    fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
                     color: FlutterFlowTheme.of(context).secondary,
-                    useGoogleFonts: true,
                   ),
                   textAlign: TextAlign.center,
                 ),

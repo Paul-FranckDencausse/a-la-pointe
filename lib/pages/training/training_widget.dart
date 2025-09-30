@@ -144,13 +144,13 @@ class _TrainingWidgetState extends State<TrainingWidget> {
             },
             child: Text(
               'Mentions légales',
-              style: FlutterFlowTheme.of(context).bodyMedium.override(
-                fontFamily: GoogleFonts.inter().fontFamily,
-                fontWeight:
-                FlutterFlowTheme.of(context).bodyMedium.fontWeight,
-                fontStyle:
-                FlutterFlowTheme.of(context).bodyMedium.fontStyle,
+              style: FlutterFlowTheme.of(context).titleLarge.override(
+                fontFamily: GoogleFonts.inter().fontFamily, // ✅ corrige ici
+                fontWeight: FlutterFlowTheme.of(context).titleLarge.fontWeight,
+                fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
+                color: FlutterFlowTheme.of(context).secondary,
               ),
+
             ),
           ),
         ),
