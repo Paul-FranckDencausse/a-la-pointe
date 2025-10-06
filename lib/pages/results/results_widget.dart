@@ -11,305 +11,119 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'results_model.dart';
 export 'results_model.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
-// 🔹 BLE
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-
-class ResultsWidget extends StatefulWidget {
-  final String? deviceId;
-
-  const ResultsWidget({
-    super.key,
-    this.deviceId,
-  });
-
-  static String routeName = 'Results';
-  static String routePath = '/results';
+class BluetoothClassicPage extends StatefulWidget {
+  const BluetoothClassicPage({Key? key}) : super(key: key);
 
   @override
-  State<ResultsWidget> createState() => _ResultsWidgetState();
+  State<BluetoothClassicPage> createState() => _BluetoothClassicPageState();
 }
 
-class _ResultsWidgetState extends State<ResultsWidget> {
-  late ResultsModel _model;
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-  int _selectedIndex = 1;
-
-  BluetoothDevice? connectedDevice;
-  BluetoothCharacteristic? notifyCharacteristic;
-
-  // Données dynamiques
-  List<String> hitsLog = [];
-  List<int> reactionTimes = [];
-  int hitCount = 0;
-  int maxHits = 5;
+class _BluetoothClassicPageState extends State<BluetoothClassicPage> {
+  BluetoothState _bluetoothState = BluetoothState.UNKNOWN;
+  BluetoothDevice? _connectedDevice;
+  BluetoothConnection? _connection;
+  bool _isConnecting = false;
+  bool get isConnected => _connection != null && _connection!.isConnected;
 
   @override
   void initState() {
     super.initState();
-    _model = createModel(context, () => ResultsModel());
-
-    if (widget.deviceId != null) {
-      debugPrint("📡 Connexion à l'appareil: ${widget.deviceId}");
-      connectToDevice(widget.deviceId!);
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
-  }
-
-  @override
-  void dispose() {
-    connectedDevice?.disconnect();
-    _model.dispose();
-    super.dispose();
-  }
-
-  /// 🔹 Connexion BLE
-  Future<void> connectToDevice(String deviceId) async {
-    try {
-      final device = BluetoothDevice.fromId(deviceId);
-      await device.connect();
-      connectedDevice = device;
-
-      List<BluetoothService> services = await device.discoverServices();
-      for (var service in services) {
-        for (var char in service.characteristics) {
-          if (char.properties.notify) {
-            notifyCharacteristic = char;
-            await char.setNotifyValue(true);
-            char.value.listen((value) {
-              final msg = String.fromCharCodes(value);
-              parseSensorMessage(msg);
-            });
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint("⚠️ Erreur connexion BLE: $e");
-    }
-  }
-
-  /// 🔹 Parse les messages envoyés par l’ESP32
-  void parseSensorMessage(String msg) {
-    debugPrint("📩 Message reçu: $msg");
-
-    if (msg.contains("HIT")) {
-      hitsLog.add(msg);
-      hitCount++;
-
-      // Extraire le temps de réaction
-      final regex = RegExp(r"Reaction time: (\d+) ms");
-      final match = regex.firstMatch(msg);
-      if (match != null) {
-        final reactionTime = int.parse(match.group(1)!);
-        reactionTimes.add(reactionTime);
-        debugPrint("⏱ Temps de réaction: $reactionTime ms");
-      }
-
-      // Mise à jour du modèle pour le graphique et le pourcentage
-      setState(() {
-        _model.lineChartData = [
-          FFLineChartData(
-            xData: List.generate(reactionTimes.length, (i) => i + 1),
-            yData: reactionTimes,
-            settings: LineChartBarData(
-              color: FlutterFlowTheme.of(context).secondary,
-              barWidth: 2.5,
-              isCurved: true,
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true,
-                color: FlutterFlowTheme.of(context).secondary.withOpacity(0.2),
-              ),
-            ),
-          ),
-        ];
-        _model.percentValue = (hitCount / maxHits).clamp(0.0, 1.0);
-      });
-    }
-  }
-
-  /// 🔹 Navigation bas
-  void _onItemTapped(int index) {
-    if (_selectedIndex == index && index != 1) return;
-    setState(() {
-      _selectedIndex = index;
+    FlutterBluetoothSerial.instance.state.then((state) {
+      setState(() => _bluetoothState = state);
     });
 
-    switch (index) {
-      case 0:
-        context.pushNamed(TrainingWidget.routeName);
-        break;
-      case 1:
-        if (ModalRoute.of(context)?.settings.name != ResultsWidget.routeName) {
-          context.pushNamed(
-            ResultsWidget.routeName,
-            queryParameters:
-            widget.deviceId != null ? {'deviceId': widget.deviceId!} : {},
-          );
-        }
-        break;
-      case 2:
-        context.pushNamed(BluetoothWidget.routeName);
-        break;
-      case 3:
-        launchURL('https://www.a-la-pointe.fr/shop');
-        break;
+    FlutterBluetoothSerial.instance.onStateChanged().listen((state) {
+      setState(() => _bluetoothState = state);
+    });
+  }
+
+  Future<void> _connectToDevice(BluetoothDevice device) async {
+    setState(() => _isConnecting = true);
+    try {
+      BluetoothConnection connection = await BluetoothConnection.toAddress(device.address);
+      setState(() {
+        _connectedDevice = device;
+        _connection = connection;
+        _isConnecting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Connecté à ${device.name ?? "Inconnu"}')),
+      );
+
+      connection.input?.listen((data) {
+        debugPrint('Données reçues : ${String.fromCharCodes(data)}');
+      }).onDone(() {
+        setState(() {
+          _connection = null;
+          _connectedDevice = null;
+        });
+      });
+    } catch (error) {
+      setState(() => _isConnecting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur de connexion : $error')),
+      );
     }
   }
 
-  // ======================================================
-  // ====================== BUILD =========================
-  // ======================================================
+  Future<void> _disconnect() async {
+    await _connection?.close();
+    setState(() {
+      _connection = null;
+      _connectedDevice = null;
+    });
+  }
+
+  Future<void> _sendData(String message) async {
+    if (isConnected) {
+      _connection!.output.add(Uint8List.fromList(utf8.encode(message + "\r\n")));
+      await _connection!.output.allSent;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBar(
-          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-          automaticallyImplyLeading: false,
-          centerTitle: true,
-          title: InkWell(
-            onTap: () async {
-              context.pushNamed(HomePageWidget.routeName);
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.asset(
-                'assets/images/picto-alp-bleu_(1).png',
-                width: 70,
-                height: 56,
-                fit: BoxFit.cover,
-              ),
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Bluetooth Classique'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => setState(() {}),
           ),
-          elevation: 2.0,
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 12),
-                FlutterFlowAdBanner(
-                  width: MediaQuery.sizeOf(context).width,
-                  height: 50,
-                  showsTestAd: true,
-                ),
-                const SizedBox(height: 20),
-
-                // Titre
-                Text(
-                  widget.deviceId != null
-                      ? 'Résultats pour Appareil (...${widget.deviceId!.substring(widget.deviceId!.length - 5)})'
-                      : 'Résultats Généraux',
-                  style: FlutterFlowTheme.of(context).titleLarge.override(
-                    fontFamily: GoogleFonts.inter().fontFamily, // ✅ corrige ici
-                    fontWeight: FlutterFlowTheme.of(context).titleLarge.fontWeight,
-                    fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
-                    color: FlutterFlowTheme.of(context).secondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-
-                // Graphique
-                Container(
-                  width: double.infinity,
-                  height: 230,
-                  child: (_model.lineChartData == null ||
-                      _model.lineChartData!.isEmpty)
-                      ? Center(
-                    child: Text(
-                      widget.deviceId == null
-                          ? "Aucune cible connectée.\nConnectez-vous via Bluetooth pour afficher les résultats."
-                          : "Aucune donnée pour l'instant.",
-                      textAlign: TextAlign.center,
-                      style: FlutterFlowTheme.of(context).bodyMedium,
-                    ),
-                  )
-                      : FlutterFlowLineChart(
-                    data: _model.lineChartData!,
-                    chartStylingInfo: ChartStylingInfo(
-                      backgroundColor:
-                      FlutterFlowTheme.of(context).secondaryBackground,
-                      showBorder: false,
-                    ),
-                    axisBounds: AxisBounds(),
-                    xAxisLabelInfo: AxisLabelInfo(
-                        reservedSize: 32, showLabels: true),
-                    yAxisLabelInfo: AxisLabelInfo(
-                        reservedSize: 40, showLabels: true),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Pourcentage
-                CircularPercentIndicator(
-                  percent: widget.deviceId == null ? 0.0 : _model.percentValue,
-                  radius: 70,
-                  lineWidth: 14,
-                  animation: true,
-                  progressColor: FlutterFlowTheme.of(context).secondary,
-                  backgroundColor:
-                  FlutterFlowTheme.of(context).accent4.withOpacity(0.5),
-                  center: Text(
-                    widget.deviceId == null
-                        ? "–"
-                        : "${(_model.percentValue * 100).toStringAsFixed(0)}%",
-                    style: FlutterFlowTheme.of(context).headlineSmall,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Logs
-                if (widget.deviceId == null)
-                  Text(
-                    "Connectez-vous à une cible via la page Bluetooth pour voir les résultats.",
-                    textAlign: TextAlign.center,
-                    style: FlutterFlowTheme.of(context).bodyMedium,
-                  )
-                else if (hitsLog.isEmpty)
-                  Text(
-                    "Aucun hit enregistré pour le moment.",
-                    textAlign: TextAlign.center,
-                    style: FlutterFlowTheme.of(context).bodyMedium,
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children:
-                    hitsLog.map((msg) => Text("• $msg")).toList(),
-                  ),
-              ],
-            ),
-          ),
-        ),
-
-        // ✅ Navigation placée correctement
-        bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
-          selectedItemColor: FlutterFlowTheme.of(context).secondary,
-          unselectedItemColor: Colors.grey[600],
-          onTap: _onItemTapped,
-          items: const [
-            BottomNavigationBarItem(
-                icon: Icon(Icons.fitness_center), label: 'Training'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart), label: 'Résultats'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.bluetooth_sharp), label: 'Bluetooth'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart_outlined), label: 'Boutique'),
-          ],
-        ),
+        ],
       ),
+      body: _bluetoothState != BluetoothState.STATE_ON
+          ? const Center(child: Text('Active le Bluetooth'))
+          : FutureBuilder<List<BluetoothDevice>>(
+        future: FlutterBluetoothSerial.instance.getBondedDevices(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          final devices = snapshot.data!;
+          return ListView(
+            children: devices.map((d) {
+              return ListTile(
+                title: Text(d.name ?? "Inconnu"),
+                subtitle: Text(d.address),
+                trailing: ElevatedButton(
+                  onPressed: isConnected ? null : () => _connectToDevice(d),
+                  child: const Text("Connecter"),
+                ),
+              );
+            }).toList(),
+          );
+        },
+      ),
+      floatingActionButton: isConnected
+          ? FloatingActionButton.extended(
+        onPressed: () => _sendData("PING"),
+        label: const Text("Envoyer"),
+        icon: const Icon(Icons.send),
+      )
+          : null,
     );
   }
 }
