@@ -1,289 +1,314 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:app_settings/app_settings.dart';
+// lib/pages/results/results_widget.dart
+
+import '/flutter_flow/flutter_flow_ad_banner.dart';
+import '/flutter_flow/flutter_flow_charts.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
+import '/flutter_flow/flutter_flow_util.dart';
+import 'dart:ui';
+import '/index.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:percent_indicator/percent_indicator.dart';
+import 'results_model.dart';
+export 'results_model.dart';
 
-class BluetoothWidget extends StatefulWidget {
-  const BluetoothWidget({super.key});
+// 🔹 BLE
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-  static String routeName = 'BluetoothPage';
-  static String routePath = '/bluetooth';
+class ResultsWidget extends StatefulWidget {
+  final String? deviceId;
+
+  const ResultsWidget({
+    super.key,
+    this.deviceId,
+  });
+
+  static String routeName = 'Results';
+  static String routePath = '/results';
 
   @override
-  State<BluetoothWidget> createState() => _BluetoothWidgetState();
+  State<ResultsWidget> createState() => _ResultsWidgetState();
 }
 
-class _BluetoothWidgetState extends State<BluetoothWidget> {
+class _ResultsWidgetState extends State<ResultsWidget> {
+  late ResultsModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  int _selectedIndex = 1;
 
-  bool _bluetoothOn = false;
-  bool _isScanning = false;
-  bool _isConnecting = false;
+  BluetoothDevice? connectedDevice;
+  BluetoothCharacteristic? notifyCharacteristic;
 
-  List<ScanResult> _scanResults = [];
-  BluetoothDevice? _connectedDevice;
-  String? _connectedDeviceRemoteId;
-
-  BluetoothCharacteristic? _txCharacteristic; // Pour écrire
-  BluetoothCharacteristic? _rxCharacteristic; // Pour lire (optionnel)
-
-  StreamSubscription<BluetoothAdapterState>? _adapterStateSubscription;
-  StreamSubscription<List<ScanResult>>? _scanResultsSubscription;
-  StreamSubscription<BluetoothConnectionState>? _connectionStateSubscription;
+  // Données dynamiques
+  List<String> hitsLog = [];
+  List<int> reactionTimes = [];
+  int hitCount = 0;
+  int maxHits = 5;
 
   @override
   void initState() {
     super.initState();
+    _model = createModel(context, () => ResultsModel());
 
-    // Surveille l’état du Bluetooth
-    _adapterStateSubscription =
-        FlutterBluePlus.adapterState.listen((BluetoothAdapterState state) {
-          if (!mounted) return;
-          setState(() {
-            _bluetoothOn = state == BluetoothAdapterState.on;
-          });
-          if (_bluetoothOn) {
-            _startScan();
-          } else {
-            _clearDevices();
-            _showSnackbar('Bluetooth désactivé');
-          }
-        });
+    if (widget.deviceId != null) {
+      debugPrint("📡 Connexion à l'appareil: ${widget.deviceId}");
+      connectToDevice(widget.deviceId!);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
   @override
   void dispose() {
-    _adapterStateSubscription?.cancel();
-    _scanResultsSubscription?.cancel();
-    _connectionStateSubscription?.cancel();
-    if (_isScanning) {
-      FlutterBluePlus.stopScan();
-    }
+    connectedDevice?.disconnect();
+    _model.dispose();
     super.dispose();
   }
 
-  void _showSnackbar(String message, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 3),
-        backgroundColor: isError ? Colors.redAccent : null,
-      ),
-    );
-  }
-
-  void _clearDevices() {
-    setState(() {
-      _scanResults = [];
-      _connectedDevice = null;
-      _connectedDeviceRemoteId = null;
-      _isConnecting = false;
-      _txCharacteristic = null;
-      _rxCharacteristic = null;
-    });
-  }
-
-  // Demande les permissions
-  Future<bool> _checkAndRequestPermissions() async {
-    List<Permission> permissionsToRequest = [];
-
-    if (await Permission.bluetoothScan.isDenied) {
-      permissionsToRequest.add(Permission.bluetoothScan);
-    }
-    if (await Permission.bluetoothConnect.isDenied) {
-      permissionsToRequest.add(Permission.bluetoothConnect);
-    }
-    if (await Permission.locationWhenInUse.isDenied) {
-      permissionsToRequest.add(Permission.locationWhenInUse);
-    }
-
-    if (permissionsToRequest.isNotEmpty) {
-      Map<Permission, PermissionStatus> statuses =
-      await permissionsToRequest.request();
-      bool allGranted = statuses.values.every((status) => status.isGranted);
-      return allGranted;
-    }
-    return true;
-  }
-
-  Future<void> _startScan() async {
-    if (!_bluetoothOn) {
-      _showSnackbar('Veuillez activer le Bluetooth.', isError: true);
-      return;
-    }
-    if (_isScanning) return;
-
-    bool permissionsGranted = await _checkAndRequestPermissions();
-    if (!permissionsGranted) {
-      _showSnackbar("Permissions Bluetooth manquantes.", isError: true);
-      return;
-    }
-
-    setState(() {
-      _isScanning = true;
-      _scanResults = [];
-    });
-
-    _scanResultsSubscription = FlutterBluePlus.scanResults.listen((results) {
-      if (!mounted) return;
-      setState(() {
-        _scanResults = results;
-      });
-    });
-
+  /// 🔹 Connexion BLE
+  Future<void> connectToDevice(String deviceId) async {
     try {
-      await FlutterBluePlus.startScan(timeout: const Duration(seconds: 8));
-    } catch (e) {
-      _showSnackbar('Erreur scan: $e', isError: true);
-    }
+      final device = BluetoothDevice.fromId(deviceId);
+      await device.connect();
+      connectedDevice = device;
 
-    Future.delayed(const Duration(seconds: 8), () {
-      if (mounted) setState(() => _isScanning = false);
-    });
-  }
-
-  Future<void> _connectToDevice(BluetoothDevice device) async {
-    if (_isConnecting) return;
-    if (_connectedDevice?.remoteId == device.remoteId) return;
-
-    setState(() => _isConnecting = true);
-
-    try {
-      await device.connect(timeout: const Duration(seconds: 15));
-    } catch (e) {
-      _showSnackbar("Erreur de connexion: $e", isError: true);
-      setState(() => _isConnecting = false);
-      return;
-    }
-
-    _connectionStateSubscription?.cancel();
-    _connectionStateSubscription =
-        device.connectionState.listen((BluetoothConnectionState state) async {
-          if (!mounted) return;
-          if (state == BluetoothConnectionState.connected) {
-            setState(() {
-              _connectedDevice = device;
-              _connectedDeviceRemoteId = device.remoteId.str;
-              _isConnecting = false;
-            });
-            _showSnackbar("Connecté à ${device.platformName}");
-
-            // Découverte des services
-            List<BluetoothService> services =
-            await _connectedDevice!.discoverServices();
-            for (var service in services) {
-              for (var c in service.characteristics) {
-                if (c.properties.write) {
-                  _txCharacteristic = c;
-                }
-                if (c.properties.notify) {
-                  _rxCharacteristic = c;
-                  await c.setNotifyValue(true);
-                  c.lastValueStream.listen((value) {
-                    _showSnackbar("📩 Reçu: ${String.fromCharCodes(value)}");
-                  });
-                }
-              }
-            }
-          } else if (state == BluetoothConnectionState.disconnected) {
-            _showSnackbar("Déconnecté");
-            setState(() {
-              _connectedDevice = null;
-              _connectedDeviceRemoteId = null;
-              _txCharacteristic = null;
-              _rxCharacteristic = null;
+      List<BluetoothService> services = await device.discoverServices();
+      for (var service in services) {
+        for (var char in service.characteristics) {
+          if (char.properties.notify) {
+            notifyCharacteristic = char;
+            await char.setNotifyValue(true);
+            char.value.listen((value) {
+              final msg = String.fromCharCodes(value);
+              parseSensorMessage(msg);
             });
           }
-        });
-  }
-
-  Future<void> _disconnectFromDevice() async {
-    if (_connectedDevice == null) return;
-    try {
-      await _connectedDevice!.disconnect();
+        }
+      }
     } catch (e) {
-      _showSnackbar("Erreur de déconnexion: $e", isError: true);
+      debugPrint("⚠️ Erreur connexion BLE: $e");
     }
   }
 
-  Future<void> _sendCommand(String cmd) async {
-    if (_txCharacteristic == null) {
-      _showSnackbar("Pas de characteristic WRITE", isError: true);
-      return;
-    }
-    try {
-      await _txCharacteristic!.write(cmd.codeUnits, withoutResponse: true);
-      _showSnackbar("📡 Envoyé: $cmd");
-    } catch (e) {
-      _showSnackbar("Erreur envoi: $e", isError: true);
-    }
-  }
+  /// 🔹 Parse les messages envoyés par l’ESP32
+  void parseSensorMessage(String msg) {
+    debugPrint("📩 Message reçu: $msg");
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = FlutterFlowTheme.of(context);
+    if (msg.contains("HIT")) {
+      hitsLog.add(msg);
+      hitCount++;
 
-    return Scaffold(
-      key: scaffoldKey,
-      appBar: AppBar(
-        title: const Text("Bluetooth"),
-        actions: [
-          IconButton(
-            icon: Icon(_isScanning ? Icons.stop : Icons.refresh),
-            onPressed: _isScanning ? () => FlutterBluePlus.stopScan() : _startScan,
-          )
-        ],
-      ),
-      body: Column(
-        children: [
-          if (_connectedDevice != null)
-            Card(
-              child: ListTile(
-                title: Text("Connecté à ${_connectedDevice!.platformName}"),
-                subtitle: Text("ID: $_connectedDeviceRemoteId"),
-                trailing: ElevatedButton(
-                  onPressed: _disconnectFromDevice,
-                  child: const Text("Déconnecter"),
-                ),
+      // Extraire le temps de réaction
+      final regex = RegExp(r"Reaction time: (\d+) ms");
+      final match = regex.firstMatch(msg);
+      if (match != null) {
+        final reactionTime = int.parse(match.group(1)!);
+        reactionTimes.add(reactionTime);
+        debugPrint("⏱ Temps de réaction: $reactionTime ms");
+      }
+
+      // Mise à jour du modèle pour le graphique et le pourcentage
+      setState(() {
+        _model.lineChartData = [
+          FFLineChartData(
+            xData: List.generate(reactionTimes.length, (i) => i + 1),
+            yData: reactionTimes,
+            settings: LineChartBarData(
+              color: FlutterFlowTheme.of(context).secondary,
+              barWidth: 2.5,
+              isCurved: true,
+              dotData: FlDotData(show: true),
+              belowBarData: BarAreaData(
+                show: true,
+                color: FlutterFlowTheme.of(context).secondary.withOpacity(0.2),
               ),
-            ),
-          if (_isConnecting) const LinearProgressIndicator(),
-          Expanded(
-            child: ListView(
-              children: _scanResults
-                  .map((r) => ListTile(
-                leading: const Icon(Icons.bluetooth),
-                title: Text(r.device.platformName.isNotEmpty
-                    ? r.device.platformName
-                    : "Appareil inconnu"),
-                subtitle: Text(r.device.remoteId.str),
-                trailing: ElevatedButton(
-                  onPressed: () => _connectToDevice(r.device),
-                  child: const Text("Connecter"),
-                ),
-              ))
-                  .toList(),
             ),
           ),
-          if (_connectedDevice != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                      onPressed: () => _sendCommand("BUZZER_ON"),
-                      child: const Text("BUZZER ON")),
-                  ElevatedButton(
-                      onPressed: () => _sendCommand("BUZZER_OFF"),
-                      child: const Text("BUZZER OFF")),
-                ],
+        ];
+        _model.percentValue = (hitCount / maxHits).clamp(0.0, 1.0);
+      });
+    }
+  }
+
+  /// 🔹 Navigation bas
+  void _onItemTapped(int index) {
+    if (_selectedIndex == index && index != 1) return;
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        context.pushNamed(TrainingWidget.routeName);
+        break;
+      case 1:
+        if (ModalRoute.of(context)?.settings.name != ResultsWidget.routeName) {
+          context.pushNamed(
+            ResultsWidget.routeName,
+            queryParameters:
+            widget.deviceId != null ? {'deviceId': widget.deviceId!} : {},
+          );
+        }
+        break;
+      case 2:
+        context.pushNamed(BluetoothWidget.routeName);
+        break;
+      case 3:
+        launchURL('https://www.a-la-pointe.fr/shop');
+        break;
+    }
+  }
+
+  // ======================================================
+  // ====================== BUILD =========================
+  // ======================================================
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        key: scaffoldKey,
+        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+        appBar: AppBar(
+          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+          automaticallyImplyLeading: false,
+          centerTitle: true,
+          title: InkWell(
+            onTap: () async {
+              context.pushNamed(HomePageWidget.routeName);
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.asset(
+                'assets/images/picto-alp-bleu_(1).png',
+                width: 70,
+                height: 56,
+                fit: BoxFit.cover,
               ),
-            )
-        ],
+            ),
+          ),
+          elevation: 2.0,
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 12),
+                FlutterFlowAdBanner(
+                  width: MediaQuery.sizeOf(context).width,
+                  height: 50,
+                  showsTestAd: true,
+                ),
+                const SizedBox(height: 20),
+
+                // Titre
+                Text(
+                  widget.deviceId != null
+                      ? 'Résultats pour Appareil (...${widget.deviceId!.substring(widget.deviceId!.length - 5)})'
+                      : 'Résultats Généraux',
+                  style: FlutterFlowTheme.of(context).titleLarge.override(
+                    fontFamily: GoogleFonts.inter().fontFamily, // ✅ corrige ici
+                    fontWeight: FlutterFlowTheme.of(context).titleLarge.fontWeight,
+                    fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
+                    color: FlutterFlowTheme.of(context).secondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+
+                // Graphique
+                Container(
+                  width: double.infinity,
+                  height: 230,
+                  child: (_model.lineChartData == null ||
+                      _model.lineChartData!.isEmpty)
+                      ? Center(
+                    child: Text(
+                      widget.deviceId == null
+                          ? "Aucune cible connectée.\nConnectez-vous via Bluetooth pour afficher les résultats."
+                          : "Aucune donnée pour l'instant.",
+                      textAlign: TextAlign.center,
+                      style: FlutterFlowTheme.of(context).bodyMedium,
+                    ),
+                  )
+                      : FlutterFlowLineChart(
+                    data: _model.lineChartData!,
+                    chartStylingInfo: ChartStylingInfo(
+                      backgroundColor:
+                      FlutterFlowTheme.of(context).secondaryBackground,
+                      showBorder: false,
+                    ),
+                    axisBounds: AxisBounds(),
+                    xAxisLabelInfo: AxisLabelInfo(
+                        reservedSize: 32, showLabels: true),
+                    yAxisLabelInfo: AxisLabelInfo(
+                        reservedSize: 40, showLabels: true),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Pourcentage
+                CircularPercentIndicator(
+                  percent: widget.deviceId == null ? 0.0 : _model.percentValue,
+                  radius: 70,
+                  lineWidth: 14,
+                  animation: true,
+                  progressColor: FlutterFlowTheme.of(context).secondary,
+                  backgroundColor:
+                  FlutterFlowTheme.of(context).accent4.withOpacity(0.5),
+                  center: Text(
+                    widget.deviceId == null
+                        ? "–"
+                        : "${(_model.percentValue * 100).toStringAsFixed(0)}%",
+                    style: FlutterFlowTheme.of(context).headlineSmall,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Logs
+                if (widget.deviceId == null)
+                  Text(
+                    "Connectez-vous à une cible via la page Bluetooth pour voir les résultats.",
+                    textAlign: TextAlign.center,
+                    style: FlutterFlowTheme.of(context).bodyMedium,
+                  )
+                else if (hitsLog.isEmpty)
+                  Text(
+                    "Aucun hit enregistré pour le moment.",
+                    textAlign: TextAlign.center,
+                    style: FlutterFlowTheme.of(context).bodyMedium,
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children:
+                    hitsLog.map((msg) => Text("• $msg")).toList(),
+                  ),
+              ],
+            ),
+          ),
+        ),
+
+        // ✅ Navigation placée correctement
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          selectedItemColor: FlutterFlowTheme.of(context).secondary,
+          unselectedItemColor: Colors.grey[600],
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.fitness_center), label: 'Training'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.bar_chart), label: 'Résultats'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.bluetooth_sharp), label: 'Bluetooth'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.shopping_cart_outlined), label: 'Boutique'),
+          ],
+        ),
       ),
     );
   }
