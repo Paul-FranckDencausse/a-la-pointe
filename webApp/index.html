@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>OptiMove – À la Pointe</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Police -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00e1aa">
+
+<!-- Google AdSense -->
+<script async
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXX"
+  crossorigin="anonymous">
+</script>
+
+<style>
+:root {
+  --brand: #00e1aa;
+  --text: #1a1a1a;
+  --bg: #f9f9f9;
+  --radius: 16px;
+  --connect-btn: #00005a;
+}
+
+body {
+  font-family: "Space Grotesk", sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.logo {
+  width: 120px;
+  margin: 0 auto 20px;
+  display: block;
+}
+
+h1 {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 30px;
+}
+
+.card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  margin: 10px 0;
+  font-size: 18px;
+  border: none;
+  border-radius: var(--radius);
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+#connectBtn {
+  background: var(--connect-btn);
+}
+
+select {
+  width: 100%;
+  padding: 15px;
+  font-size: 18px;
+  border-radius: var(--radius);
+  border: 2px solid var(--brand);
+  background: white;
+  margin: 10px 0 20px;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+#sendBtn {
+  background: var(--brand);
+}
+
+#status {
+  margin-top: 20px;
+  padding: 12px;
+  background: white;
+  border-radius: var(--radius);
+  text-align: center;
+  font-size: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.ad-fallback {
+  height: 50px;
+  background: #e6e6e6;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<img src="logo.png" class="logo" alt="Logo À la Pointe">
+
+<h1>OptiMove – Contrôleur BLE</h1>
+
+<!-- ÉTAPE 1 & 2 -->
+<div class="card">
+  <button id="connectBtn">Se connecter à OptiMove-S3</button>
+
+  <label for="modeSelect"><strong>Choisir un mode :</strong></label>
+  <select id="modeSelect">
+    <option value="MODE_INIT">Mode Initiation</option>
+    <option value="MODE_LOISIR">Mode Loisir</option>
+    <option value="MODE_PERF">Mode Performeurs</option>
+    <option value="MODE_SERIE">Mode Série</option>
+  </select>
+
+  <button id="sendBtn">Envoyer le mode sélectionné</button>
+</div>
+
+<div id="status">Pas connecté</div>
+
+<!-- ÉTAPE 3 : PUBLICITÉ -->
+<div class="card">
+  <h2>Partenaires</h2>
+
+  <!-- Google Ads -->
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXX"
+       data-ad-slot="1234567890"
+       data-ad-format="auto"
+       data-full-width-responsive="true">
+  </ins>
+
+  <!-- Fallback -->
+  <div class="ad-fallback">
+    Bannière partenaire
+  </div>
+
+  <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+</div>
+
+<script>
+// Service Worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+
+// BLE
+let bluetoothDevice;
+let characteristic;
+
+const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+
+document.getElementById("connectBtn").addEventListener("click", connectBLE);
+document.getElementById("sendBtn").addEventListener("click", sendMode);
+
+async function connectBLE() {
+  try {
+    setStatus("Recherche en cours…");
+
+    bluetoothDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ name: "OptiMove-S3" }],
+      optionalServices: [SERVICE_UUID]
+    });
+
+    setStatus("Connexion…");
+
+    const server = await bluetoothDevice.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+    setStatus("Connecté ✔️");
+  } catch (e) {
+    setStatus("Erreur : " + e);
+  }
+}
+
+async function sendMode() {
+  if (!characteristic) {
+    setStatus("Pas connecté");
+    return;
+  }
+
+  const cmd = document.getElementById("modeSelect").value;
+  const encoder = new TextEncoder();
+  await characteristic.writeValue(encoder.encode(cmd));
+  setStatus("Commande envoyée : " + cmd);
+}
+
+function setStatus(txt) {
+  document.getElementById("status").innerText = txt;
+}
+</script>
+
+</body>
+</html>
