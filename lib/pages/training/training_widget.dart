@@ -1,313 +1,206 @@
-import '/flutter_flow/flutter_flow_ad_banner.dart';
-import '/flutter_flow/flutter_flow_drop_down.dart';
-import '/flutter_flow/flutter_flow_radio_button.dart';
-import '/flutter_flow/flutter_flow_theme.dart';
-import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import '/flutter_flow/form_field_controller.dart';
-import 'dart:ui';
-import '/index.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'training_model.dart';
-export 'training_model.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-class TrainingWidget extends StatefulWidget {
-  const TrainingWidget({super.key});
+/// =======================
+/// UUID BLE (DOIVENT MATCHER L'ESP32)
+/// =======================
+const String serviceUUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const String cmdCharUUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+const String evtCharUUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
-  static String routeName = 'Training';
-  static String routePath = '/training';
+class TrainingPage extends StatefulWidget {
+  const TrainingPage({super.key});
 
   @override
-  State<TrainingWidget> createState() => _TrainingWidgetState();
+  State<TrainingPage> createState() => _TrainingPageState();
 }
 
-class _TrainingWidgetState extends State<TrainingWidget> {
-  late TrainingModel _model;
+class _TrainingPageState extends State<TrainingPage> {
+  BluetoothDevice? device;
+  BluetoothCharacteristic? cmdChar;
+  BluetoothCharacteristic? evtChar;
 
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-  int _selectedIndex = 0;
-
-  // ✅ Variable de connexion Bluetooth (factice pour l’instant)
   bool isConnected = false;
+  bool buzzerEnabled = true;
+  bool silentMode = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _model = createModel(context, () => TrainingModel());
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
-  }
+  String selectedMode = "Initiation";
+  String status = "Non connecté";
 
-  @override
-  void dispose() {
-    _model.dispose();
-    super.dispose();
-  }
+  /// =======================
+  /// CONNEXION BLE
+  /// =======================
+  Future<void> connectBLE() async {
+    setState(() => status = "Recherche de la cible…");
 
-  void _onItemTapped(int index) async {
-    setState(() {
-      _selectedIndex = index;
+    await FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+
+    FlutterBluePlus.scanResults.listen((results) async {
+      for (final r in results) {
+        if (r.device.name == "OptiMove-S3") {
+          device = r.device;
+          await FlutterBluePlus.stopScan();
+          await device!.connect();
+          await discoverServices();
+          setState(() {
+            isConnected = true;
+            status = "Connecté ✔️";
+          });
+        }
+      }
     });
+  }
 
-    switch (index) {
-      case 0:
-        context.pushNamed(TrainingWidget.routeName);
-        break;
-      case 1:
-        context.pushNamed(ResultsWidget.routeName);
-        break;
-      case 2:
-        context.pushNamed(BluetoothWidget.routeName);
-        break;
-      case 3:
-        await launchURL('https://www.a-la-pointe.fr/shop');
-        break;
+  /// =======================
+  /// DÉCOUVERTE SERVICES
+  /// =======================
+  Future<void> discoverServices() async {
+    final services = await device!.discoverServices();
+    for (final s in services) {
+      if (s.uuid.toString() == serviceUUID) {
+        for (final c in s.characteristics) {
+          if (c.uuid.toString() == cmdCharUUID) cmdChar = c;
+          if (c.uuid.toString() == evtCharUUID) {
+            evtChar = c;
+            await evtChar!.setNotifyValue(true);
+            evtChar!.value.listen(handleEvent);
+          }
+        }
+      }
     }
   }
 
+  /// =======================
+  /// ENVOI COMMANDE
+  /// =======================
+  Future<void> sendCommand(Map<String, dynamic> data) async {
+    if (cmdChar == null) return;
+    final payload = jsonEncode(data);
+    await cmdChar!.write(utf8.encode(payload), withoutResponse: false);
+  }
+
+  /// =======================
+  /// ÉVÉNEMENTS ESP32
+  /// =======================
+  void handleEvent(List<int> value) {
+    final decoded = utf8.decode(value);
+    final event = jsonDecode(decoded);
+
+    debugPrint("📥 EVENT: $event");
+
+    if (event["event"] == "TARGET") {
+      debugPrint("🎯 Cible ${event["data"]["target"]}");
+    }
+  }
+
+  /// =======================
+  /// UI
+  /// =======================
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
-      child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBar(
-          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-          automaticallyImplyLeading: false,
-          title: InkWell(
-            splashColor: Colors.transparent,
-            onTap: () async {
-              context.pushNamed(HomePageWidget.routeName);
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.asset(
-                'assets/images/picto-alp-bleu_(1).png',
-                width: 70,
-                height: 56,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          centerTitle: true,
-          elevation: 2.0,
-        ),
-
-        // ✅ Corps : affiche en fonction de la connexion
-        body: SafeArea(
-          top: true,
-          child: isConnected
-              ? _buildTrainingForm(context)
-              : _buildNotConnected(context),
-        ),
-
-        // ✅ Navigation
-        bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
-          selectedItemColor: FlutterFlowTheme.of(context).secondary,
-          unselectedItemColor: Colors.grey,
-          onTap: _onItemTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.sports_gymnastics),
-              label: 'Training',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.data_thresholding_sharp),
-              label: 'Résultats',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bluetooth_sharp),
-              label: 'Bluetooth',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart),
-              label: 'Boutique',
-            ),
-          ],
-        ),
-
-        // ✅ Mentions légales
-        bottomSheet: Container(
-          height: 40,
-          color: FlutterFlowTheme.of(context).alternate,
-          alignment: Alignment.center,
-          child: InkWell(
-            onTap: () async {
-              await launchURL('https://www.a-la-pointe.fr/terms');
-            },
-            child: Text(
-              'Mentions légales',
-              style: FlutterFlowTheme.of(context).titleLarge.override(
-                fontFamily: GoogleFonts.inter().fontFamily, // ✅ corrige ici
-                fontWeight: FlutterFlowTheme.of(context).titleLarge.fontWeight,
-                fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
-                color: FlutterFlowTheme.of(context).secondary,
-              ),
-
-            ),
-          ),
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("OptiMove – Training"),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: isConnected ? buildTrainingUI() : buildNotConnectedUI(),
       ),
     );
   }
 
-  /// ✅ Écran quand aucune cible n’est connectée
-  Widget _buildNotConnected(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.bluetooth_disabled,
-                size: 80, color: FlutterFlowTheme.of(context).secondaryText),
-            const SizedBox(height: 20),
-            Text(
-              "Aucune cible connectée",
-              style: FlutterFlowTheme.of(context).titleLarge,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Active ton Bluetooth et connecte une cible\navant de commencer l’entraînement.",
-              textAlign: TextAlign.center,
-              style: FlutterFlowTheme.of(context).bodyMedium,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                context.pushNamed(BluetoothWidget.routeName);
-              },
-              icon: const Icon(Icons.bluetooth),
-              label: const Text("Se connecter à une cible"),
-            ),
-          ],
-        ),
-      ),
+  /// =======================
+  /// ÉCRAN NON CONNECTÉ
+  /// =======================
+  Widget buildNotConnectedUI() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.bluetooth_disabled, size: 80),
+        const SizedBox(height: 20),
+        Text(status),
+        const SizedBox(height: 20),
+        ElevatedButton.icon(
+          onPressed: connectBLE,
+          icon: const Icon(Icons.bluetooth),
+          label: const Text("Se connecter à OptiMove"),
+        )
+      ],
     );
   }
 
-  /// ✅ Formulaire complet quand connecté
-  Widget _buildTrainingForm(BuildContext context) {
+  /// =======================
+  /// ÉCRAN ENTRAINEMENT
+  /// =======================
+  Widget buildTrainingUI() {
     return SingleChildScrollView(
       child: Column(
-        mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 16),
-          FlutterFlowAdBanner(
-            width: MediaQuery.sizeOf(context).width,
-            height: 50.0,
-            showsTestAd: true,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Entraînements',
-            style: FlutterFlowTheme.of(context).titleLarge.override(
-              fontFamily: GoogleFonts.interTight().fontFamily,
-              fontWeight:
-              FlutterFlowTheme.of(context).titleLarge.fontWeight,
-              fontStyle:
-              FlutterFlowTheme.of(context).titleLarge.fontStyle,
-              color: FlutterFlowTheme.of(context).secondary,
-            ),
-          ),
+          Text("Statut : $status"),
           const SizedBox(height: 20),
 
-          // Dropdown
-          FlutterFlowDropDown<String>(
-            controller: _model.dropDownValueController ??=
-                FormFieldController<String>(null),
-            options: ['Initiation', 'Loisir', 'Performeur', 'Série'],
-            onChanged: (val) =>
-                safeSetState(() => _model.dropDownValue = val),
-            width: 200.0,
-            height: 40.0,
-            textStyle: FlutterFlowTheme.of(context).bodyMedium,
-            hintText: 'Type d\'entraînement',
-            icon: Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: FlutterFlowTheme.of(context).secondaryText,
-              size: 24.0,
-            ),
-            fillColor: FlutterFlowTheme.of(context).secondaryBackground,
-            elevation: 2.0,
-            borderColor: Colors.transparent,
-            borderWidth: 0.0,
-            borderRadius: 8.0,
-            margin: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0),
-            hidesUnderline: true,
-            isOverButton: false,
-            isSearchable: false,
-            isMultiSelect: false,
-          ),
-
-          const SizedBox(height: 20),
-          // Radio boutons
-          FlutterFlowRadioButton(
-            options: ['Sabre', 'Épée', 'Fleuret'].toList(),
-            onChanged: (val) => safeSetState(() {}),
-            controller: _model.radioButtonValueController ??=
-                FormFieldController<String>(null),
-            optionHeight: 32.0,
-            textStyle: FlutterFlowTheme.of(context).labelMedium,
-            selectedTextStyle: FlutterFlowTheme.of(context).bodyMedium,
-            buttonPosition: RadioButtonPosition.left,
-            direction: Axis.vertical,
-            radioButtonColor: FlutterFlowTheme.of(context).secondary,
-            inactiveRadioButtonColor:
-            FlutterFlowTheme.of(context).secondaryText,
-            toggleable: false,
-            horizontalAlignment: WrapAlignment.start,
-            verticalAlignment: WrapCrossAlignment.start,
+          /// MODE
+          DropdownButtonFormField<String>(
+            value: selectedMode,
+            decoration: const InputDecoration(labelText: "Mode"),
+            items: const [
+              DropdownMenuItem(value: "Initiation", child: Text("Initiation")),
+              DropdownMenuItem(value: "Loisir", child: Text("Loisir")),
+              DropdownMenuItem(value: "Performeurs", child: Text("Performeurs")),
+              DropdownMenuItem(value: "Serie", child: Text("Série")),
+            ],
+            onChanged: (v) => setState(() => selectedMode = v!),
           ),
 
           const SizedBox(height: 20),
 
-          // ✅ Checkbox "Mode silencieux"
-          CheckboxListTile(
-            value: _model.checkboxListTileValue1 ??= false,
-            onChanged: (newValue) {
-              safeSetState(() => _model.checkboxListTileValue1 = newValue!);
-              if (newValue == true) {
-                sendCommandToSensor("SILENT_ON");
-              } else {
-                sendCommandToSensor("SILENT_OFF");
-              }
+          /// OPTIONS
+          SwitchListTile(
+            title: const Text("Buzzer"),
+            value: buzzerEnabled,
+            onChanged: (v) => setState(() => buzzerEnabled = v),
+          ),
+
+          SwitchListTile(
+            title: const Text("Mode silencieux"),
+            value: silentMode,
+            onChanged: (v) => setState(() => silentMode = v),
+          ),
+
+          const SizedBox(height: 30),
+
+          /// START
+          ElevatedButton(
+            onPressed: () {
+              sendCommand({
+                "cmd": "START",
+                "mode": selectedMode,
+                "targets": 3,
+                "delay_ms": selectedMode == "Initiation"
+                    ? 3000
+                    : selectedMode == "Loisir"
+                    ? 1500
+                    : 800,
+                "buzzer": buzzerEnabled && !silentMode
+              });
             },
-            title: const Text('Mode silencieux'),
-            activeColor: FlutterFlowTheme.of(context).secondary,
-            checkColor: FlutterFlowTheme.of(context).info,
+            child: const Text("Démarrer l'entraînement"),
           ),
 
-          // ✅ Checkbox "Buzzer"
-          CheckboxListTile(
-            value: _model.checkboxListTileValue2 ??= true,
-            onChanged: (newValue) {
-              safeSetState(() => _model.checkboxListTileValue2 = newValue!);
-              if (newValue == true) {
-                sendCommandToSensor("BUZZER_ON");
-              } else {
-                sendCommandToSensor("BUZZER_OFF");
-              }
+          const SizedBox(height: 10),
+
+          /// STOP
+          OutlinedButton(
+            onPressed: () {
+              sendCommand({"cmd": "STOP"});
             },
-            title: const Text('Buzzer activé'),
-            activeColor: FlutterFlowTheme.of(context).secondary,
-            checkColor: FlutterFlowTheme.of(context).info,
+            child: const Text("Arrêter"),
           ),
         ],
       ),
     );
-  }
-
-  /// ✅ Fonction qui enverra la commande au capteur
-  void sendCommandToSensor(String command) {
-    debugPrint("📡 Envoi au capteur : $command");
-    // Ici tu mettras la logique Bluetooth (flutter_blue, etc.)
   }
 }
