@@ -4,6 +4,7 @@ import '/flutter_flow/flutter_flow_ad_banner.dart';
 import '/flutter_flow/flutter_flow_charts.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import 'dart:convert';                   // ← POUR JSON
 import 'dart:ui';
 import '/index.dart';
 import 'package:flutter/material.dart';
@@ -12,16 +13,13 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'results_model.dart';
 export 'results_model.dart';
 
-// 🔹 BLE
+// BLE
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class ResultsWidget extends StatefulWidget {
   final String? deviceId;
 
-  const ResultsWidget({
-    super.key,
-    this.deviceId,
-  });
+  const ResultsWidget({super.key, this.deviceId});
 
   static String routeName = 'Results';
   static String routePath = '/results';
@@ -39,10 +37,11 @@ class _ResultsWidgetState extends State<ResultsWidget> {
   BluetoothCharacteristic? notifyCharacteristic;
 
   // Données dynamiques
-  List<String> hitsLog = [];
   List<int> reactionTimes = [];
+  List<String> hitsLog = [];
+
   int hitCount = 0;
-  int maxHits = 5;
+  int maxHits = 10;
 
   @override
   void initState() {
@@ -50,10 +49,8 @@ class _ResultsWidgetState extends State<ResultsWidget> {
     _model = createModel(context, () => ResultsModel());
 
     if (widget.deviceId != null) {
-      debugPrint("📡 Connexion à l'appareil: ${widget.deviceId}");
       connectToDevice(widget.deviceId!);
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
   @override
@@ -63,7 +60,9 @@ class _ResultsWidgetState extends State<ResultsWidget> {
     super.dispose();
   }
 
-  /// 🔹 Connexion BLE
+  /* ---------------------------------------------------
+     CONNEXION BLE + LECTURE NOTIFICATIONS JSON
+     --------------------------------------------------- */
   Future<void> connectToDevice(String deviceId) async {
     try {
       final device = BluetoothDevice.fromId(deviceId);
@@ -76,10 +75,7 @@ class _ResultsWidgetState extends State<ResultsWidget> {
           if (char.properties.notify) {
             notifyCharacteristic = char;
             await char.setNotifyValue(true);
-            char.value.listen((value) {
-              final msg = String.fromCharCodes(value);
-              parseSensorMessage(msg);
-            });
+            char.value.listen(onBleData);
           }
         }
       }
@@ -88,227 +84,212 @@ class _ResultsWidgetState extends State<ResultsWidget> {
     }
   }
 
-  /// 🔹 Parse les messages envoyés par l’ESP32
-  void parseSensorMessage(String msg) {
-    debugPrint("📩 Message reçu: $msg");
+  /* ---------------------------------------------------
+     PARSE JSON REÇU
+     --------------------------------------------------- */
+  void onBleData(List<int> rawData) {
+    final str = utf8.decode(rawData);
+    debugPrint("📩 JSON reçu → $str");
 
-    if (msg.contains("HIT")) {
-      hitsLog.add(msg);
-      hitCount++;
+    dynamic json;
+    try {
+      json = jsonDecode(str);
+    } catch (e) {
+      debugPrint("⚠️ JSON invalide");
+      return;
+    }
 
-      // Extraire le temps de réaction
-      final regex = RegExp(r"Reaction time: (\d+) ms");
-      final match = regex.firstMatch(msg);
-      if (match != null) {
-        final reactionTime = int.parse(match.group(1)!);
-        reactionTimes.add(reactionTime);
-        debugPrint("⏱ Temps de réaction: $reactionTime ms");
+    // ▬▬▬▬▬▬ EVENT TEMPS RÉEL ▬▬▬▬▬▬
+    if (json is Map && json['event'] == 'TARGET') {
+      final int target = json['data']['target'];
+      final int ts = json['ts'];
+
+      hitsLog.add("Cible $target à ${ts}ms");
+      reactionTimes.add(ts);
+
+      setState(() {
+        hitCount++;
+        _updateChart();
+      });
+    }
+
+    // ▬▬▬▬▬▬ RÉSULTATS COMPLETS ▬▬▬▬▬▬
+    if (json is Map && json['results'] != null) {
+      final List results = json['results'];
+
+      reactionTimes.clear();
+      hitsLog.clear();
+
+      for (var entry in results) {
+        reactionTimes.add(entry['reaction']);
+        hitsLog.add("Cible ${entry['target']} → ${entry['reaction']}ms");
       }
 
-      // Mise à jour du modèle pour le graphique et le pourcentage
       setState(() {
-        _model.lineChartData = [
-          FFLineChartData(
-            xData: List.generate(reactionTimes.length, (i) => i + 1),
-            yData: reactionTimes,
-            settings: LineChartBarData(
-              color: FlutterFlowTheme.of(context).secondary,
-              barWidth: 2.5,
-              isCurved: true,
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true,
-                color: FlutterFlowTheme.of(context).secondary.withOpacity(0.2),
-              ),
-            ),
-          ),
-        ];
-        _model.percentValue = (hitCount / maxHits).clamp(0.0, 1.0);
+        hitCount = reactionTimes.length;
+        _updateChart();
       });
     }
   }
 
-  /// 🔹 Navigation bas
+  /* ---------------------------------------------------
+     MET À JOUR LE GRAPH
+     --------------------------------------------------- */
+  void _updateChart() {
+    _model.percentValue = (hitCount / maxHits).clamp(0.0, 1.0);
+
+    _model.lineChartData = [
+      FFLineChartData(
+        xData: List.generate(reactionTimes.length, (i) => i + 1),
+        yData: reactionTimes,
+        settings: LineChartBarData(
+          color: FlutterFlowTheme.of(context).secondary,
+          barWidth: 3,
+          isCurved: true,
+          dotData: FlDotData(show: true),
+          belowBarData: BarAreaData(
+            show: true,
+            color: FlutterFlowTheme.of(context).secondary.withOpacity(0.2),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  /* ---------------------------------------------------
+     NAVIGATION
+     --------------------------------------------------- */
   void _onItemTapped(int index) {
-    if (_selectedIndex == index && index != 1) return;
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
 
     switch (index) {
       case 0:
         context.pushNamed(TrainingWidget.routeName);
         break;
       case 1:
-        if (ModalRoute.of(context)?.settings.name != ResultsWidget.routeName) {
-          context.pushNamed(
-            ResultsWidget.routeName,
-            queryParameters:
-            widget.deviceId != null ? {'deviceId': widget.deviceId!} : {},
-          );
-        }
+        context.pushNamed(
+          ResultsWidget.routeName,
+          queryParameters: widget.deviceId != null
+              ? {'deviceId': widget.deviceId!}
+              : {},
+        );
         break;
       case 2:
         context.pushNamed(BluetoothWidget.routeName);
         break;
       case 3:
-        launchURL('https://www.a-la-pointe.fr/shop');
+        launchURL("https://www.a-la-pointe.fr/shop");
         break;
     }
   }
 
-  // ======================================================
-  // ====================== BUILD =========================
-  // ======================================================
+  /* ---------------------------------------------------
+     BUILD UI
+     --------------------------------------------------- */
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        key: scaffoldKey,
+    return Scaffold(
+      backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+
+      appBar: AppBar(
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBar(
-          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-          automaticallyImplyLeading: false,
-          centerTitle: true,
-          title: InkWell(
-            onTap: () async {
-              context.pushNamed(HomePageWidget.routeName);
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.asset(
-                'assets/images/picto-alp-bleu_(1).png',
-                width: 70,
-                height: 56,
-                fit: BoxFit.cover,
+        elevation: 1,
+        title: Text(
+          "Résultats",
+          style: FlutterFlowTheme.of(context).titleMedium,
+        ),
+        centerTitle: true,
+      ),
+
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              FlutterFlowAdBanner(
+                width: MediaQuery.sizeOf(context).width,
+                height: 50,
+                showsTestAd: true,
               ),
-            ),
-          ),
-          elevation: 2.0,
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 12),
-                FlutterFlowAdBanner(
-                  width: MediaQuery.sizeOf(context).width,
-                  height: 50,
-                  showsTestAd: true,
-                ),
-                const SizedBox(height: 20),
 
-                // Titre
-                Text(
-                  widget.deviceId != null
-                      ? 'Résultats pour Appareil (...${widget.deviceId!.substring(widget.deviceId!.length - 5)})'
-                      : 'Résultats Généraux',
-                  style: FlutterFlowTheme.of(context).titleLarge.override(
-                    fontFamily: GoogleFonts.inter().fontFamily, // ✅ corrige ici
-                    fontWeight: FlutterFlowTheme.of(context).titleLarge.fontWeight,
-                    fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
-                    color: FlutterFlowTheme.of(context).secondary,
+              const SizedBox(height: 20),
+
+              Text(
+                "Temps de réaction",
+                style: FlutterFlowTheme.of(context).titleLarge,
+              ),
+
+              const SizedBox(height: 20),
+
+              // ▬▬▬▬▬▬ GRAPHIQUE ▬▬▬▬▬▬
+              Container(
+                height: 220,
+                child: _model.lineChartData == null ||
+                    _model.lineChartData!.isEmpty
+                    ? Center(
+                  child: Text("Aucune donnée reçue."),
+                )
+                    : FlutterFlowLineChart(
+                  data: _model.lineChartData!,
+                  chartStylingInfo: ChartStylingInfo(
+                    showGrid: true,
+                    showBorder: false,
                   ),
-                  textAlign: TextAlign.center,
+                  axisBounds: AxisBounds(),
+                  xAxisLabelInfo: AxisLabelInfo(showLabels: true),
+                  yAxisLabelInfo: AxisLabelInfo(showLabels: true),
                 ),
-                const SizedBox(height: 20),
+              ),
 
-                // Graphique
-                Container(
-                  width: double.infinity,
-                  height: 230,
-                  child: (_model.lineChartData == null ||
-                      _model.lineChartData!.isEmpty)
-                      ? Center(
-                    child: Text(
-                      widget.deviceId == null
-                          ? "Aucune cible connectée.\nConnectez-vous via Bluetooth pour afficher les résultats."
-                          : "Aucune donnée pour l'instant.",
-                      textAlign: TextAlign.center,
-                      style: FlutterFlowTheme.of(context).bodyMedium,
-                    ),
-                  )
-                      : FlutterFlowLineChart(
-                    data: _model.lineChartData!,
-                    chartStylingInfo: ChartStylingInfo(
-                      backgroundColor:
-                      FlutterFlowTheme.of(context).secondaryBackground,
-                      showBorder: false,
-                    ),
-                    axisBounds: AxisBounds(),
-                    xAxisLabelInfo: AxisLabelInfo(
-                        reservedSize: 32, showLabels: true),
-                    yAxisLabelInfo: AxisLabelInfo(
-                        reservedSize: 40, showLabels: true),
-                  ),
+              const SizedBox(height: 20),
+
+              // ▬▬▬▬▬▬ POURCENTAGE ▬▬▬▬▬▬
+              CircularPercentIndicator(
+                percent: _model.percentValue,
+                radius: 70,
+                lineWidth: 14,
+                animation: true,
+                progressColor: FlutterFlowTheme.of(context).secondary,
+                center: Text(
+                  "${(_model.percentValue * 100).toStringAsFixed(0)}%",
+                  style: FlutterFlowTheme.of(context).headlineSmall,
                 ),
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                // Pourcentage
-                CircularPercentIndicator(
-                  percent: widget.deviceId == null ? 0.0 : _model.percentValue,
-                  radius: 70,
-                  lineWidth: 14,
-                  animation: true,
-                  progressColor: FlutterFlowTheme.of(context).secondary,
-                  backgroundColor:
-                  FlutterFlowTheme.of(context).accent4.withOpacity(0.5),
-                  center: Text(
-                    widget.deviceId == null
-                        ? "–"
-                        : "${(_model.percentValue * 100).toStringAsFixed(0)}%",
-                    style: FlutterFlowTheme.of(context).headlineSmall,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Logs
-                if (widget.deviceId == null)
-                  Text(
-                    "Connectez-vous à une cible via la page Bluetooth pour voir les résultats.",
-                    textAlign: TextAlign.center,
-                    style: FlutterFlowTheme.of(context).bodyMedium,
-                  )
-                else if (hitsLog.isEmpty)
-                  Text(
-                    "Aucun hit enregistré pour le moment.",
-                    textAlign: TextAlign.center,
-                    style: FlutterFlowTheme.of(context).bodyMedium,
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children:
-                    hitsLog.map((msg) => Text("• $msg")).toList(),
-                  ),
-              ],
-            ),
+              // ▬▬▬▬▬▬ LOGS TEXTE ▬▬▬▬▬▬
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: hitsLog.map((e) => Text("• $e")).toList(),
+              ),
+            ],
           ),
         ),
+      ),
 
-        // ✅ Navigation placée correctement
-        bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
-          selectedItemColor: FlutterFlowTheme.of(context).secondary,
-          unselectedItemColor: Colors.grey[600],
-          onTap: _onItemTapped,
-          items: const [
-            BottomNavigationBarItem(
-                icon: Icon(Icons.fitness_center), label: 'Training'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart), label: 'Résultats'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.bluetooth_sharp), label: 'Bluetooth'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart_outlined), label: 'Boutique'),
-          ],
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        selectedItemColor: FlutterFlowTheme.of(context).secondary,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(
+              icon: Icon(Icons.sports_gymnastics), label: "Training"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart), label: "Résultats"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.bluetooth), label: "Bluetooth"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart), label: "Boutique"),
+        ],
+      ),
+    );
+  }
+}
+          BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart), label: "Boutique"),
+        ],
       ),
     );
   }
