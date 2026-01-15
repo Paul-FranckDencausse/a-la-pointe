@@ -273,7 +273,7 @@ class _ResultsWidgetState extends State<ResultsWidget> {
         currentIndex: _selectedIndex,
         selectedItemColor: FlutterFlowTheme.of(context).secondary,
         onTap: _onItemTapped,
-        items: const [
+        items: [
           BottomNavigationBarItem(
               icon: Icon(Icons.sports_gymnastics), label: "Training"),
           BottomNavigationBarItem(
@@ -284,13 +284,8 @@ class _ResultsWidgetState extends State<ResultsWidget> {
               icon: Icon(Icons.shopping_cart), label: "Boutique"),
         ],
       ),
+
     );
   }
 }
-          BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart), label: "Boutique"),
-        ],
-      ),
-    );
-  }
-}
+

@@ -9,14 +9,18 @@ const String serviceUUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 const String cmdCharUUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 const String evtCharUUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
-class TrainingPage extends StatefulWidget {
-  const TrainingPage({super.key});
+class TrainingWidget extends StatefulWidget {
+  const TrainingWidget({super.key});
+
+  static const String routeName = 'Training';
+  static const String routePath = '/training';
 
   @override
-  State<TrainingPage> createState() => _TrainingPageState();
+  State<TrainingWidget> createState() => _TrainingWidgetState();
 }
 
-class _TrainingPageState extends State<TrainingPage> {
+class _TrainingWidgetState extends State<TrainingWidget> {
+
   BluetoothDevice? device;
   BluetoothCharacteristic? cmdChar;
   BluetoothCharacteristic? evtChar;
